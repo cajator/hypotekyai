@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         city: '',
         loanTerm: 25, fixation: 5, monthlyIncome: null, monthlyLiabilities: 0,
     };
+    let aiConversationState = { step: 'start' };
 
     // --- ELEMENT SELECTORS ---
     const modeButtons = document.querySelectorAll('.mode-btn');
@@ -183,8 +184,19 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.keys(inputs).forEach(key => {
             const inputElement = inputs[key];
             if (!inputElement) return;
-            const val = inputElement.type === 'select-one' ? parseInt(inputElement.value) : (inputElement.id.toLowerCase().includes('city') ? inputElement.value : parseNumericInput(inputElement.value));
-            if (val !== null && val !== '') state[key] = val;
+            let val = inputElement.value;
+            if (inputElement.id === 'ownResources' && typeof val === 'string' && val.includes('%')) {
+                const percentage = parseFloat(val.replace('%', '').trim());
+                const propertyVal = parseNumericInput(inputs.propertyValue.value);
+                if (!isNaN(percentage) && propertyVal > 0) {
+                     state.ownResources = (propertyVal * percentage) / 100;
+                     // Do not format back to percentage, show the calculated amount
+                     inputElement.value = new Intl.NumberFormat('cs-CZ', {useGrouping: false}).format(state.ownResources);
+                }
+            } else {
+                 val = inputElement.type === 'select-one' ? parseInt(val) : (inputElement.id.toLowerCase().includes('city') ? val : parseNumericInput(val));
+                 if (val !== null && val !== '') state[key] = val;
+            }
         });
         
         const calcData = getCalculationData();
@@ -286,6 +298,115 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- AI CHAT FUNCTIONS ---
+    const chatWindow = document.getElementById('chat-window');
+    const chatInput = document.getElementById('chat-input');
+    const chatSendBtn = document.getElementById('chat-send');
+    const chatSuggestions = document.getElementById('chat-suggestions');
+    const apiKey = ""; // IMPORTANT: This is a placeholder. For production, use Netlify functions.
+    
+    function addChatMessage(content, sender, isHtml = false) {
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`;
+        if (isHtml) bubble.appendChild(content);
+        else bubble.innerHTML = content.replace(/\n/g, '<br>');
+        chatWindow.appendChild(bubble);
+        bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+        return bubble;
+    }
+
+    function renderSuggestions(suggestions = []) {
+        chatSuggestions.innerHTML = '';
+        if (suggestions.length > 0) {
+            suggestions.forEach(text => {
+                const btn = document.createElement('button');
+                btn.className = 'suggestion-btn';
+                btn.textContent = text;
+                btn.onclick = () => { chatInput.value = text; handleChatSubmit(); };
+                chatSuggestions.appendChild(btn);
+            });
+        }
+    }
+    
+    function createResultVisualInChat(calcData) {
+        const container = document.createElement('div');
+        const rates = getInterestRates(calcData.ltv, state.fixation);
+        
+        container.innerHTML = `
+            <h4 class="font-bold text-lg mb-2 text-center">Přehled variant</h4>
+            <div class="space-y-3">
+                ${Object.entries(rates).map(([type, rate]) => `
+                    <div class="p-3 bg-white rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold capitalize">${type === 'best' ? 'Nejlepší' : (type === 'likely' ? 'Pravděpodobná' : 'Jistota')}</p>
+                                <p class="text-sm text-gray-500">${rate.toFixed(2)} % p.a.</p>
+                            </div>
+                            <p class="text-lg font-semibold">${formatCurrency(calculateMonthlyPayment(calcData.loanAmount, rate, state.loanTerm))}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        addChatMessage(container, 'ai', true);
+    }
+
+    async function handleChatSubmit() {
+        const userMessage = chatInput.value.trim();
+        if (!userMessage) return;
+
+        addChatMessage(userMessage, 'user');
+        chatInput.value = '';
+        renderSuggestions([]);
+        const thinkingBubble = addChatMessage('', 'ai');
+        thinkingBubble.classList.add('thinking');
+        
+        updateCalculations();
+        
+        try {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userMessage,
+                    state,
+                    aiConversationState
+                })
+            });
+
+            if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+            
+            const aiResponse = await response.json();
+
+            if (aiResponse.updateState) {
+                Object.assign(state, aiResponse.updateState);
+                Object.keys(aiResponse.updateState).forEach(key => { if (inputs[key]) inputs[key].value = state[key]; });
+                updateCalculations();
+            }
+            
+            thinkingBubble.innerHTML = aiResponse.responseText.replace(/\n/g, '<br>') || "Omlouvám se, nastala chyba.";
+            thinkingBubble.classList.remove('thinking');
+            
+            if(aiResponse.performCalculation) {
+                const calcData = getCalculationData();
+                if (calcData && calcData.loanAmount > 0) createResultVisualInChat(calcData);
+                else addChatMessage("Bohužel chybí klíčové údaje pro výpočet. Zkuste prosím začít znovu.", 'ai');
+            }
+
+            renderSuggestions(aiResponse.suggestions);
+            if (aiResponse.conversationStep) aiConversationState.step = aiResponse.conversationStep;
+            
+            if(userMessage.toLowerCase().includes('spojit se specialistou')) {
+                 switchMode('calculator'); currentStep = 5; updateUI();
+            }
+
+        } catch (error) {
+            console.error("Error processing AI response:", error);
+            thinkingBubble.innerHTML = "Omlouvám se, došlo k technické chybě. Zkuste to prosím znovu.";
+            thinkingBubble.classList.remove('thinking');
+        }
+    }
+
     // --- EVENT LISTENERS ---
     modeButtons.forEach(btn => btn.addEventListener('click', () => switchMode(btn.dataset.mode)));
     prevBtn.addEventListener('click', () => navigate(-1));
@@ -307,25 +428,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Netlify form success handling
-    const leadFormElement = document.getElementById("lead-form");
-    leadFormElement.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const myForm = e.target;
-      const formData = new FormData(myForm);
-      
-      fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(formData).toString(),
-      })
-      .then(() => {
-          leadForm.style.display = 'none';
-          document.getElementById('form-success').classList.remove('hidden');
-      })
-      .catch((error) => alert(error));
+    inputs.ownResources.addEventListener('blur', updateCalculations);
+
+    leadForm.addEventListener('submit', (e) => {
+        e.preventDefault(); 
+        const myForm = e.target;
+        const formData = new FormData(myForm);
+        
+        fetch("/", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams(formData).toString(),
+        })
+        .then(() => {
+            leadForm.style.display = 'none';
+            document.getElementById('form-success').classList.remove('hidden');
+        })
+        .catch((error) => alert(error));
     });
 
+    chatSendBtn.addEventListener('click', handleChatSubmit);
+    chatInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleChatSubmit());
+    renderSuggestions(["Spočítat hypotéku", "Jaké jsou aktuální sazby?"]);
 
     // --- INITIALIZATION ---
     function initialize() {
@@ -341,12 +465,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const stats = {
             mediated: 8400000000,
             clients: 12847,
+            savings: 286000
         }
 
         setInterval(() => {
             stats.mediated += Math.floor(Math.random() * 50000);
             stats.clients += Math.random() > 0.7 ? 1 : 0;
-            document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(3)} mld Kč`;
+            document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(2)} mld Kč`;
             document.getElementById('stats-clients').textContent = stats.clients.toLocaleString('cs-CZ');
         }, 2500);
 
@@ -363,4 +488,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initialize();
 });
+</script>
+
+</body>
+</html>
 

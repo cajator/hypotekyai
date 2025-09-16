@@ -225,7 +225,7 @@
                             <h2 class="text-3xl font-bold mb-4">Získejte kompletní analýzu a konzultaci zdarma</h2>
                             <p class="text-gray-600 mb-8">Vyplňte své údaje a my vám zašleme detailní PDF report a spojíme vás s naším hypotečním specialistou, který s vámi probere nejlepší možnosti.</p>
                             
-                            <form id="lead-form" class="space-y-4 text-left" netlify>
+                            <form id="lead-form" class="space-y-4 text-left" name="lead-form" method="POST" data-netlify="true">
                                 <input type="hidden" name="form-name" value="lead-form" />
                                 <div>
                                     <label for="name" class="block text-sm font-medium text-gray-700">Jméno a příjmení</label>
@@ -350,8 +350,7 @@
         </footer>
     </div>
 
-<script src="script.js"></script>
-
+    <script src="script.js" defer></script>
 </body>
 </html>
 
