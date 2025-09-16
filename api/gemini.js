@@ -1,56 +1,65 @@
-// This is a Netlify serverless function.
-// It acts as a secure proxy to the Google Gemini API.
+// Tato funkce bude fungovat na Netlify jako "serverless function"
+// Její adresa bude: https://nazev-vaseho-webu.netlify.app/api/gemini
 
-export default async (req, context) => {
-    // 1. Check if the request method is POST.
-    if (req.method !== 'POST') {
-        return new Response("Method Not Allowed", { status: 405 });
+exports.handler = async function (event, context) {
+    // Povolení pro volání z jakékoliv domény (pro vývoj)
+    // V produkci byste měli omezit na vaši doménu
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    };
+
+    // Netlify vyžaduje zpracování OPTIONS požadavku pro CORS
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers
+        };
     }
 
-    // 2. Get the Gemini API Key from environment variables.
-    // This key MUST be set in your Netlify site settings.
+    // Získání API klíče z bezpečných proměnných prostředí Netlify
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
-        return new Response("API key is not configured.", { status: 500 });
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'API klíč pro Gemini není nastaven.' }),
+        };
     }
 
+    // API endpoint pro Gemini
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
     try {
-        // 3. Get the request body from the frontend.
-        const requestBody = await req.json();
-
-        // 4. Construct the URL for the Gemini API.
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
-
-        // 5. Forward the request to the Gemini API.
-        const geminiResponse = await fetch(apiUrl, {
+        // Přeposlání dat od klienta na Gemini API
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(requestBody), // The body is passed through from the client
+            body: event.body, // Tělo požadavku od klienta
         });
 
-        // 6. Handle the response from Gemini.
-        if (!geminiResponse.ok) {
-            const errorText = await geminiResponse.text();
-            console.error("Gemini API Error:", errorText);
-            return new Response(errorText, { status: geminiResponse.status });
+        if (!response.ok) {
+            throw new Error(`Chyba při volání Gemini API: ${response.statusText}`);
         }
 
-        const geminiData = await geminiResponse.json();
-        
-        // 7. Send the successful response back to the frontend.
-        return new Response(JSON.stringify(geminiData), {
-            headers: { 'Content-Type': 'application/json' },
-        });
+        const data = await response.json();
 
+        // Odeslání odpovědi od Gemini zpět klientovi
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(data),
+        };
     } catch (error) {
-        console.error("Error in serverless function:", error);
-        return new Response("Internal Server Error", { status: 500 });
+        console.error('Chyba v serverless funkci (gemini):', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: error.message }),
+        };
     }
 };
 
-// Configuration for Netlify to recognize this as a function
-export const config = {
-  path: "/api/gemini",
-};
