@@ -1,57 +1,40 @@
-# Netlify Configuration
-# netlify.toml
+Netlify Configuration for Hypotéka AI
+This file configures the build, functions, and redirects.
 
 [build]
-  # Není potřeba build command, máme statický HTML
-  publish = "."
+We are deploying a static site, so we just need to publish the root directory.
 
-# Headers pro bezpečnost a výkon
-[[headers]]
-  for = "/*"
-  [headers.values]
-    # Bezpečnostní hlavičky
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    
-    # Cache control
-    Cache-Control = "public, max-age=3600"
+publish = "."
 
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    # HTML se nemá cachovat
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
-# Redirecty (pokud potřebujete)
-[[redirects]]
-  from = "/home"
-  to = "/"
-  status = 301
-
-[[redirects]]
-  from = "/kalkulacka"
-  to = "/#calculator"
-  status = 301
-
-# 404 stránka
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 404
-
-# Funkce (pokud budete chtít přidat)
 [functions]
-  directory = "functions"
+Specifies the directory where Netlify will find the serverless functions.
 
-# Formuláře
-[build.processing]
-  skip_processing = false
+directory = "functions/"
+This is the correct rule for a Single Page Application (SPA).
+It rewrites all paths to index.html with a 200 status, allowing client-side routing.
 
-[build.processing.html]
-  pretty_urls = true
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+Security and caching headers for all assets.
 
-# Environment variables příklad
-# V Netlify UI nastavte:
-# GOOGLE_ANALYTICS_ID = "G-XXXXXXXXXX"
+[[headers]]
+for = "/*"
+[headers.values]
+# Security headers
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+X-XSS-Protection = "1; mode=block"
+Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache assets for 1 hour in the browser.
+Cache-Control = "public, max-age=3600"
+
+Specific headers for the main HTML file to prevent caching.
+
+[[headers]]
+for = "/index.html"
+[headers.values]
+# Do not cache the HTML file to ensure users always get the latest version.
+Cache-Control = "no-cache, no-store, must-revalidate"

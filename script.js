@@ -1,5 +1,5 @@
-// Hypotéka AI - JavaScript v9.0 (Production Ready)
-// Focused on stability, user experience, and AI reliability.
+// Hypotéka AI - JavaScript v8.0 (Production Ready)
+// Refactored for stability, error handling, and performance.
 
 (function() {
     'use strict';
@@ -16,7 +16,7 @@
     document.addEventListener('DOMContentLoaded', init);
 
     function init() {
-        console.log('Hypotéka AI v9.0 - Initializing Production Build');
+        console.log('Hypotéka AI v8.0 - Initializing Production Build');
         setupEventListeners();
         updateLiveCounter();
         setInterval(updateLiveCounter, 7000);
@@ -26,25 +26,24 @@
 
     // --- EVENT LISTENER SETUP ---
     function setupEventListeners() {
+        // Main UI interactions
         document.querySelector('.mode-switcher').addEventListener('click', handleModeSwitch);
         document.getElementById('prev-btn').addEventListener('click', () => navigate(-1));
         document.getElementById('next-btn').addEventListener('click', () => navigate(1));
         document.getElementById('step-1').addEventListener('click', handleIntentSelection);
         document.getElementById('contact-form').addEventListener('submit', handleFormSubmit);
 
+        // Form inputs
         ['propertyPrice', 'ownResources', 'monthlyIncome', 'otherLoans'].forEach(id => document.getElementById(id).addEventListener('input', handleInputChange));
         ['loanTerm', 'fixation'].forEach(id => document.getElementById(id).addEventListener('change', handleInputChange));
 
+        // AI Chat
         document.getElementById('send-btn').addEventListener('click', handleAIChatSubmit);
         document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAIChatSubmit(); } });
         document.getElementById('chat-suggestions').addEventListener('click', handleSuggestionClick);
         document.querySelector('.ai-sidebar').addEventListener('click', handleSidebarAction);
-        
-        const contactNav = document.getElementById('contact-nav-link');
-        const footerContact = document.getElementById('footer-contact-link');
-        if(contactNav) contactNav.addEventListener('click', (e) => { e.preventDefault(); navigateToContact(); });
-        if(footerContact) footerContact.addEventListener('click', (e) => { e.preventDefault(); navigateToContact(); });
 
+        // Modals
         setupModal('bank-info-btn', 'bank-modal', 'close-bank-modal');
         setupModal('gdpr-link', 'gdpr-modal', 'close-gdpr-modal');
         setupModal('footer-gdpr-link', 'gdpr-modal', 'close-gdpr-modal');
@@ -56,14 +55,14 @@
         const modal = document.getElementById(modalId);
         const closeBtn = document.getElementById(closeId);
         const openBtn = document.getElementById(triggerId);
+
         const openModal = (e) => { e.preventDefault(); modal.classList.remove('hidden'); closeBtn.focus(); };
         const closeModal = () => modal.classList.add('hidden');
-        if (openBtn) openBtn.addEventListener('click', openModal);
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (modal) {
-            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-            document.addEventListener('keydown', (e) => { if (e.key === "Escape" && !modal.classList.contains('hidden')) closeModal(); });
-        }
+        
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape" && !modal.classList.contains('hidden')) closeModal(); });
     }
 
     // --- EVENT HANDLERS ---
@@ -92,7 +91,10 @@
     function handleFormSubmit(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const leadData = { contact: Object.fromEntries(formData.entries()), calculatorState: state.calculator };
+        const leadData = {
+            contact: Object.fromEntries(formData.entries()),
+            calculatorState: state.calculator
+        };
         console.log("GENERATED LEAD DATA:", JSON.stringify(leadData, null, 2));
         document.getElementById('form-success').classList.remove('hidden');
         e.target.style.display = 'none';
@@ -114,7 +116,11 @@
             const response = await fetch('/.netlify/functions/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userMessage, state: state.calculator, conversation: state.ai.conversation })
+                body: JSON.stringify({
+                    userMessage,
+                    state: state.calculator,
+                    conversation: state.ai.conversation
+                })
             });
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             
@@ -134,7 +140,7 @@
             }
         } catch (error) {
             console.error('AI Fetch Error:', error);
-            addMessageToConversation('ai', 'Omlouvám se, došlo k technické chybě. Zkuste to prosím znovu, nebo použijte naši kalkulačku.');
+            addMessageToConversation('ai', 'Omlouvám se, došlo k technické chybě. Zkuste to prosím znovu.');
         } finally {
             state.ui.isLoading = false;
             input.disabled = false;
@@ -144,10 +150,9 @@
     }
     
     function handleSuggestionClick(e) {
-        if (e.target.matches('.suggestion')) {
-            document.getElementById('chat-input').value = e.target.textContent;
-            handleAIChatSubmit();
-        }
+        if (!e.target.matches('.suggestion')) return;
+        document.getElementById('chat-input').value = e.target.textContent;
+        handleAIChatSubmit();
     }
 
     function handleSidebarAction(e) {
@@ -157,21 +162,23 @@
         
         switch(action) {
             case 'calculate': state.ui.currentMode = 'calculator'; break;
-            case 'contact': navigateToContact(); break;
+            case 'contact': state.ui.currentMode = 'calculator'; state.ui.currentStep = 5; break;
             case 'refinance': chatInput.value = "Chci refinancovat hypotéku"; handleAIChatSubmit(); break;
             case 'rates': chatInput.value = "Jaké jsou teď nejlepší úrokové sazby?"; handleAIChatSubmit(); break;
         }
         render();
     }
     
-    // --- CORE LOGIC & NAVIGATION ---
+    // --- CORE LOGIC ---
     function navigate(direction) {
         let newStep = state.ui.currentStep + direction;
+        
         if (newStep > 5) {
             Object.assign(state.calculator, { intent: '', propertyPrice: 0, ownResources: 0, loanTerm: 25, fixation: 5, monthlyIncome: 0, otherLoans: 0, loanAmount: 0, ltv: 0, monthlyPayment: 0 });
             newStep = 1;
         }
         if (newStep < 1) return;
+
         if (direction > 0 && !validateStep(state.ui.currentStep)) {
             alert('Vyplňte prosím všechny povinné údaje v tomto kroku.');
             return;
@@ -179,13 +186,6 @@
         state.ui.currentStep = newStep;
         if (state.ui.currentStep === 4) generateAnalysis();
         render();
-    }
-    
-    function navigateToContact() {
-        state.ui.currentMode = 'calculator';
-        state.ui.currentStep = 5;
-        render();
-        setTimeout(() => document.getElementById('name')?.focus(), 100);
     }
     
     function validateStep(step) {
@@ -201,6 +201,7 @@
     function calculateLoan() {
         const { calculator } = state;
         if (calculator.propertyPrice <= 0) return;
+        
         calculator.loanAmount = Math.max(0, calculator.propertyPrice - calculator.ownResources);
         calculator.ltv = calculator.propertyPrice > 0 ? (calculator.loanAmount / calculator.propertyPrice) * 100 : 0;
         calculator.monthlyPayment = calculateMonthlyPayment(calculator.loanAmount, getInterestRate(), calculator.loanTerm);
@@ -217,6 +218,7 @@
                 const payment = calculateMonthlyPayment(state.calculator.loanAmount, rate, state.calculator.loanTerm);
                 return { ...bank, rate, payment };
             }).sort((a, b) => a.payment - b.payment);
+            
             state.analysis = { top3: offers.slice(0, 3) };
         } catch (error) {
             console.error("Failed to generate analysis:", error);
@@ -235,17 +237,22 @@
         ]), 800));
     }
 
-    // --- RENDER FUNCTIONS (Update UI based on state) ---
+    // --- RENDER FUNCTIONS ---
     function render() {
+        // Global UI state
         document.getElementById('loading-spinner').classList.toggle('hidden', !state.ui.isLoading);
         document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.ui.currentMode));
         document.getElementById('calculator-mode').classList.toggle('hidden', state.ui.currentMode !== 'calculator');
         document.getElementById('ai-mode').classList.toggle('hidden', state.ui.currentMode !== 'ai');
-        if (state.ui.currentMode === 'calculator') renderCalculator(); else renderAI();
+        
+        if (state.ui.currentMode === 'calculator') renderCalculator();
+        else renderAI();
     }
 
     function renderCalculator() {
         const { ui, calculator, analysis } = state;
+        
+        // Timeline
         document.getElementById('progress-bar').style.width = `${((ui.currentStep - 1) / 4) * 100}%`;
         document.querySelectorAll('.timeline-step').forEach((step, i) => {
             const stepNum = i + 1;
@@ -253,12 +260,23 @@
             step.classList.toggle('completed', stepNum < ui.currentStep);
             step.querySelector('.step-circle').textContent = (stepNum < ui.currentStep) ? '✓' : stepNum;
         });
+
+        // Intent cards selection
         document.querySelectorAll('.intent-card').forEach(c => c.classList.toggle('selected', c.dataset.intent === calculator.intent));
+
+        // Step content
         document.querySelectorAll('.step-content').forEach(c => c.classList.remove('active'));
         document.getElementById(`step-${ui.currentStep}`).classList.add('active');
+
+        // Navigation buttons
         document.getElementById('prev-btn').classList.toggle('hidden', ui.currentStep === 1);
-        document.getElementById('next-btn').textContent = (ui.currentStep === 5) ? 'Začít znovu' : (ui.currentStep === 4) ? 'Získat konzultaci' : 'Další →';
+        const nextBtn = document.getElementById('next-btn');
+        nextBtn.textContent = (ui.currentStep === 5) ? 'Začít znovu' : (ui.currentStep === 4) ? 'Získat konzultaci' : 'Další →';
+        
+        // Quick calculation
         document.getElementById('quickCalc').textContent = formatCurrency(calculator.monthlyPayment) || '-- Kč';
+        
+        // DSTI
         const dstiCard = document.getElementById('dsti-result');
         if (calculator.monthlyIncome > 0 && calculator.monthlyPayment > 0) {
             dstiCard.classList.remove('hidden');
@@ -266,9 +284,15 @@
             document.getElementById('dsti-percent').textContent = `${dstiData.dsti.toFixed(1)}%`;
             document.getElementById('dsti-msg').textContent = dstiData.message;
             dstiCard.style.borderColor = dstiData.color;
-        } else { dstiCard.classList.add('hidden'); }
+        } else {
+            dstiCard.classList.add('hidden');
+        }
+        
+        // Analysis on Step 4
         if (ui.currentStep === 4 && analysis) {
-            renderOffers(analysis); renderMetrics(analysis); renderChart();
+            renderOffers(analysis);
+            renderMetrics(analysis);
+            renderChart();
         }
     }
 
@@ -277,7 +301,9 @@
         const messagesDiv = document.getElementById('chat-messages');
         messagesDiv.innerHTML = conversation.map(msg => `<div class="message ${msg.sender}">${msg.sender === 'ai' ? '<strong>🤖 AI Poradce</strong><br>' : ''}${msg.text.replace(/\n/g, '<br>')}</div>`).join('');
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
         document.getElementById('chat-suggestions').innerHTML = suggestions.map(s => `<button class="suggestion">${s}</button>`).join('');
+
         const { loanAmount, ltv, monthlyPayment } = state.calculator;
         document.getElementById('ai-summary').innerHTML = loanAmount > 0 ? `<p><strong>Úvěr:</strong> ${formatCurrency(loanAmount)}</p><p><strong>LTV:</strong> ${ltv.toFixed(1)}%</p><p><strong>Splátka:</strong> ${formatCurrency(monthlyPayment)}</p>` : `<p>Zadejte parametry do chatu.</p>`;
     }
@@ -285,7 +311,7 @@
     function renderOffers({ top3, error }) {
         const offersDiv = document.getElementById('offers');
         if (error) { offersDiv.innerHTML = `<p class="error">${error}</p>`; return; }
-        offersDiv.innerHTML = top3.map((offer, index) => `<div class="offer-card ${index === 0 ? 'recommended' : ''}">${index === 0 ? '<div class="offer-badge">NEJVÝHODNĚJŠÍ</div>' : ''}<h4>${offer.name}</h4><div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${offer.rate.toFixed(2)}%</div><div style="margin: 1rem 0;"><div class="quick-label">Měsíční splátka</div><div style="font-size: 1.5rem; font-weight: 600;">${formatCurrency(offer.payment)}</div></div></div>`).join('');
+        offersDiv.innerHTML = top3.map((offer, index) => `<div class="offer-card ${index === 0 ? 'recommended' : ''}">${index === 0 ? '<div class="offer-badge">NEJVÝHODNĚJŠÍ</div>' : ''}<h4>${offer.name}</h4><div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${offer.rate.toFixed(2)}%</div><div style="margin: 1rem 0;"><div style="color: var(--gray-text);">Měsíční splátka</div><div style="font-size: 1.5rem; font-weight: 600;">${formatCurrency(offer.payment)}</div></div></div>`).join('');
     }
 
     function renderMetrics({ top3, error }) {
@@ -298,19 +324,26 @@
     }
 
     function renderChart() {
+        const canvas = document.getElementById('loanChart');
+        if (!canvas) return;
         if (loanChart) loanChart.destroy();
+
         const years = Array.from({ length: state.calculator.loanTerm + 1 }, (_, i) => i);
+        const balances = [];
         let balance = state.calculator.loanAmount;
         const monthlyRate = getInterestRate() / 100 / 12;
-        const balances = years.map(() => {
-            const currentBalance = balance > 0 ? balance : 0;
-            for (let month = 0; month < 12 && balance > 0; month++) {
-                balance -= (state.calculator.monthlyPayment - (balance * monthlyRate));
+
+        for (let year = 0; year <= state.calculator.loanTerm; year++) {
+            balances.push(balance > 0 ? balance : 0);
+            for (let month = 0; month < 12; month++) {
+                if (balance <= 0) break;
+                const interest = balance * monthlyRate;
+                balance -= (state.calculator.monthlyPayment - interest);
             }
-            return currentBalance;
-        });
-        balances[balances.length - 1] = 0;
-        loanChart = new Chart('loanChart', { type: 'line', data: { labels: years, datasets: [{ label: 'Zůstatek úvěru', data: balances, borderColor: 'var(--primary)', backgroundColor: 'rgba(0, 102, 255, 0.1)', fill: true, tension: 0.2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        }
+        balances[balances.length - 1] = 0; // Ensure it ends at zero
+
+        loanChart = new Chart(canvas.getContext('2d'), { type: 'line', data: { labels: years, datasets: [{ label: 'Zůstatek úvěru', data: balances, borderColor: 'var(--primary)', backgroundColor: 'rgba(0, 102, 255, 0.1)', fill: true, tension: 0.2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
     }
 
     // --- HELPER FUNCTIONS ---
@@ -330,7 +363,7 @@
         else { message = '❌ Příliš vysoké. Doporučujeme konzultaci.'; color = '#ef4444'; }
         return { dsti, message, color };
     }
-    function varyRates(rates, v) { const n = JSON.parse(JSON.stringify(rates)); for (const f in n) for (const l in n[f]) n[f][l] = parseFloat((n[f][l] + v).toFixed(2)); return n; }
+    function varyRates(rates, variation) { const newRates = JSON.parse(JSON.stringify(rates)); for (const fix in newRates) for (const ltv in newRates[fix]) newRates[fix][ltv] = parseFloat((newRates[fix][ltv] + variation).toFixed(2)); return newRates; }
     function parseAmount(value) { return parseFloat(String(value).replace(/[^0-9,.]/g, '').replace(',', '.')) || 0; }
     function formatCurrency(amount) { return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount); }
     function updateLiveCounter() { const el = document.getElementById('live-count'); if (el) el.textContent = new Date().getHours() >= 9 && new Date().getHours() < 17 ? 15 + Math.floor(Math.random() * 5) : 8 + Math.floor(Math.random() * 5); }
