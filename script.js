@@ -3,10 +3,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- DATABASE & CONFIG ---
     const rateDatabase = {
         fixations: {
-            "3": [ { ltv: 80, rates: { best: 4.19, likely: 4.39, worst: 4.69 } }, { ltv: 90, rates: { best: 4.69, likely: 4.89, worst: 5.19 } } ],
-            "5": [ { ltv: 80, rates: { best: 3.99, likely: 4.29, worst: 4.59 } }, { ltv: 90, rates: { best: 4.49, likely: 4.79, worst: 5.09 } } ],
-            "7": [ { ltv: 80, rates: { best: 4.09, likely: 4.39, worst: 4.69 } }, { ltv: 90, rates: { best: 4.59, likely: 4.89, worst: 5.19 } } ],
-            "10": [ { ltv: 80, rates: { best: 4.19, likely: 4.49, worst: 4.79 } }, { ltv: 90, rates: { best: 4.69, likely: 4.99, worst: 5.29 } } ]
+            "3": [ 
+                { ltv: 80, rates: { best: 4.19, likely: 4.39, worst: 4.69 } }, 
+                { ltv: 90, rates: { best: 4.69, likely: 4.89, worst: 5.19 } } 
+            ],
+            "5": [ 
+                { ltv: 80, rates: { best: 3.99, likely: 4.29, worst: 4.59 } }, 
+                { ltv: 90, rates: { best: 4.49, likely: 4.79, worst: 5.09 } } 
+            ],
+            "7": [ 
+                { ltv: 80, rates: { best: 4.09, likely: 4.39, worst: 4.69 } }, 
+                { ltv: 90, rates: { best: 4.59, likely: 4.89, worst: 5.19 } } 
+            ],
+            "10": [ 
+                { ltv: 80, rates: { best: 4.19, likely: 4.49, worst: 4.79 } }, 
+                { ltv: 90, rates: { best: 4.69, likely: 4.99, worst: 5.29 } } 
+            ]
         },
         lastUpdated: new Date()
     };
@@ -15,78 +27,120 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentStep = 1;
     const totalSteps = 5;
     const state = {
-        intent: 'koupě', propertyValue: 5000000, ownResources: 1000000,
-        refinanceLoanBalance: 3500000, refinancePropertyValue: 6000000,
-        landPrice: 2000000, constructionBudget: 4000000, constructionOwnResources: 1000000,
+        intent: 'koupě', 
+        propertyValue: 5000000, 
+        ownResources: 1000000,
+        refinanceLoanBalance: 3500000, 
+        refinancePropertyValue: 6000000,
+        landPrice: 2000000, 
+        constructionBudget: 4000000, 
+        constructionOwnResources: 1000000,
         city: '',
-        loanTerm: 25, fixation: 5, monthlyIncome: null, monthlyLiabilities: 0,
+        loanTerm: 25, 
+        fixation: 5, 
+        monthlyIncome: null, 
+        monthlyLiabilities: 0,
     };
-    let aiConversationState = { step: 'start' };
+    
+    let aiConversationState = { step: 'start', context: {} };
+    let stats = { mediated: 8400000000, clients: 12847 };
 
     // --- ELEMENT SELECTORS ---
-    const modeButtons = document.querySelectorAll('.mode-btn');
-    const calculatorMode = document.getElementById('calculator-mode');
-    const aiMode = document.getElementById('ai-mode');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const intentButtons = document.querySelectorAll('.intent-btn');
-    const inputs = {
-        propertyValue: document.getElementById('propertyValue'), ownResources: document.getElementById('ownResources'),
-        refinanceLoanBalance: document.getElementById('refinanceLoanBalance'), refinancePropertyValue: document.getElementById('refinancePropertyValue'),
-        landPrice: document.getElementById('landPrice'), constructionBudget: document.getElementById('constructionBudget'),
-        constructionOwnResources: document.getElementById('constructionOwnResources'),
-        city: document.getElementById('city'),
-        loanTerm: document.getElementById('loanTerm'), fixation: document.getElementById('fixation'),
-        monthlyIncome: document.getElementById('monthlyIncome'), monthlyLiabilities: document.getElementById('monthlyLiabilities'),
+    const elements = {
+        modeButtons: document.querySelectorAll('.mode-btn'),
+        calculatorMode: document.getElementById('calculator-mode'),
+        aiMode: document.getElementById('ai-mode'),
+        prevBtn: document.getElementById('prev-btn'),
+        nextBtn: document.getElementById('next-btn'),
+        intentButtons: document.querySelectorAll('.intent-btn'),
+        inputs: {
+            propertyValue: document.getElementById('propertyValue'),
+            ownResources: document.getElementById('ownResources'),
+            refinanceLoanBalance: document.getElementById('refinanceLoanBalance'),
+            refinancePropertyValue: document.getElementById('refinancePropertyValue'),
+            landPrice: document.getElementById('landPrice'),
+            constructionBudget: document.getElementById('constructionBudget'),
+            constructionOwnResources: document.getElementById('constructionOwnResources'),
+            city: document.getElementById('city'),
+            loanTerm: document.getElementById('loanTerm'),
+            fixation: document.getElementById('fixation'),
+            monthlyIncome: document.getElementById('monthlyIncome'),
+            monthlyLiabilities: document.getElementById('monthlyLiabilities'),
+        },
+        inputGroups: {
+            purchase: document.getElementById('purchase-inputs'),
+            construction: document.getElementById('construction-inputs'),
+            refinancing: document.getElementById('refinancing-inputs'),
+        },
+        displays: {
+            monthlyPayment: document.getElementById('monthly-payment-display'),
+            ltv: document.getElementById('ltv-display'),
+            loanAmount: document.getElementById('loan-amount-display'),
+            dsti: document.getElementById('dsti-display'),
+            dstiResult: document.getElementById('dsti-result'),
+            dstiTip: document.getElementById('dsti-tip'),
+        },
+        chat: {
+            window: document.getElementById('chat-window'),
+            input: document.getElementById('chat-input'),
+            sendBtn: document.getElementById('chat-send'),
+            suggestions: document.getElementById('chat-suggestions')
+        },
+        leadForm: document.getElementById('lead-form')
     };
-    const inputGroups = {
-        purchase: document.getElementById('purchase-inputs'), construction: document.getElementById('construction-inputs'),
-        refinancing: document.getElementById('refinancing-inputs'),
-    };
-    const displays = {
-        monthlyPayment: document.getElementById('monthly-payment-display'), ltv: document.getElementById('ltv-display'),
-        loanAmount: document.getElementById('loan-amount-display'), dsti: document.getElementById('dsti-display'),
-        dstiResult: document.getElementById('dsti-result'), dstiTip: document.getElementById('dsti-tip'),
-    };
-    const leadForm = document.getElementById('lead-form');
     
     // --- UI FUNCTIONS ---
     function switchMode(mode) {
-        calculatorMode.classList.toggle('hidden', mode !== 'calculator');
-        aiMode.classList.toggle('hidden', mode !== 'ai');
-        modeButtons.forEach(btn => {
+        elements.calculatorMode.classList.toggle('hidden', mode !== 'calculator');
+        elements.aiMode.classList.toggle('hidden', mode !== 'ai');
+        elements.modeButtons.forEach(btn => {
             const isSelected = btn.dataset.mode === mode;
-            btn.classList.toggle('border-blue-600', isSelected); btn.classList.toggle('text-blue-600', isSelected);
-            btn.classList.toggle('border-transparent', !isSelected); btn.classList.toggle('text-gray-500', !isSelected);
+            btn.classList.toggle('border-white', isSelected);
+            btn.classList.toggle('text-white', isSelected);
+            btn.classList.toggle('border-transparent', !isSelected);
+            btn.classList.toggle('text-blue-100', !isSelected);
         });
     }
 
     function updateUI() {
+        // Update timeline
         document.querySelectorAll('.timeline-step').forEach((step, index) => {
             const stepNumber = index + 1;
             step.classList.toggle('active', stepNumber === currentStep);
             step.classList.toggle('completed', stepNumber < currentStep);
         });
-        document.getElementById('timeline-progress').style.width = `${((currentStep - 1) / (totalSteps - 1)) * 100}%`;
+        
+        // Update progress bar
+        const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+        document.getElementById('timeline-progress').style.width = `${progress}%`;
 
+        // Show/hide sections
         document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
         document.getElementById(`section-${currentStep}`)?.classList.add('active');
 
-        prevBtn.classList.toggle('hidden', currentStep === 1);
-        nextBtn.textContent = currentStep === totalSteps - 1 ? 'Zobrazit analýzu' : (currentStep === totalSteps ? 'Začít znovu' : 'Další');
-        document.getElementById('navigation-buttons').classList.toggle('hidden', currentStep === 1 && state.intent === null);
-        
+        // Update navigation
+        elements.prevBtn.classList.toggle('hidden', currentStep === 1);
         if (currentStep === totalSteps) {
-            prevBtn.classList.remove('hidden');
-            nextBtn.textContent = 'Začít znovu';
+            elements.nextBtn.textContent = 'Začít znovu';
+        } else if (currentStep === totalSteps - 1) {
+            elements.nextBtn.textContent = 'Zobrazit analýzu';
+        } else {
+            elements.nextBtn.textContent = 'Další';
         }
-        if (currentStep === 4) generateAnalysis();
+        
+        document.getElementById('navigation-buttons').classList.toggle('hidden', currentStep === 1 && !state.intent);
+        
+        if (currentStep === 4) {
+            generateAnalysis();
+        }
     }
     
     function navigate(direction) {
-        if (nextBtn.textContent === 'Začít znovu') {
-            currentStep = 1; leadForm.reset(); document.getElementById('form-success').classList.add('hidden');
-            leadForm.style.display = 'block';
+        if (elements.nextBtn.textContent === 'Začít znovu') {
+            currentStep = 1;
+            elements.leadForm.reset();
+            document.getElementById('form-success').classList.add('hidden');
+            elements.leadForm.style.display = 'block';
         } else {
             currentStep = Math.max(1, Math.min(totalSteps, currentStep + direction));
         }
@@ -95,21 +149,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setIntent(intent) {
         state.intent = intent;
-        Object.values(inputGroups).forEach(group => group.classList.add('hidden'));
-        const purchaseLabel = inputGroups.purchase.querySelector('label[for="propertyValue"]');
-        const resourcesLabel = inputGroups.purchase.querySelector('label[for="ownResources"]');
         
-        if (intent === 'koupě' || intent === 'investice' || intent === 'rekonstrukce') {
-             inputGroups.purchase.classList.remove('hidden');
-             if (intent === 'rekonstrukce'){
-                purchaseLabel.textContent = "Hodnota nemovitosti po rekonstrukci";
-                resourcesLabel.textContent = "Částka rekonstrukce";
-             } else {
-                purchaseLabel.textContent = "Cena nemovitosti (Kč)";
-                resourcesLabel.textContent = "Vlastní zdroje (Kč)";
-             }
-        } else if (intent === 'výstavba') inputGroups.construction.classList.remove('hidden');
-        else if (intent === 'refinancování') inputGroups.refinancing.classList.remove('hidden');
+        // Show/hide input groups based on intent
+        Object.values(elements.inputGroups).forEach(group => group.classList.add('hidden'));
+        
+        const purchaseLabel = elements.inputGroups.purchase.querySelector('label[for="propertyValue"]');
+        const resourcesLabel = elements.inputGroups.purchase.querySelector('label[for="ownResources"]');
+        
+        if (intent === 'koupě' || intent === 'investice') {
+            elements.inputGroups.purchase.classList.remove('hidden');
+            purchaseLabel.textContent = "Cena nemovitosti (Kč)";
+            resourcesLabel.textContent = "Vlastní zdroje (Kč)";
+        } else if (intent === 'rekonstrukce') {
+            elements.inputGroups.purchase.classList.remove('hidden');
+            purchaseLabel.textContent = "Hodnota nemovitosti po rekonstrukci (Kč)";
+            resourcesLabel.textContent = "Částka rekonstrukce (Kč)";
+        } else if (intent === 'výstavba') {
+            elements.inputGroups.construction.classList.remove('hidden');
+        } else if (intent === 'refinancování') {
+            elements.inputGroups.refinancing.classList.remove('hidden');
+        }
+        
+        // Update button states
+        elements.intentButtons.forEach(btn => {
+            btn.classList.remove('selected');
+            if (btn.dataset.intent === intent) {
+                btn.classList.add('selected');
+            }
+        });
+        
         updateCalculations();
     }
 
@@ -124,7 +192,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function formatCurrency(value) {
-        return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+        return new Intl.NumberFormat('cs-CZ', { 
+            style: 'currency', 
+            currency: 'CZK', 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
+        }).format(value);
     }
     
     function getInterestRates(ltv, fixation) {
@@ -141,22 +214,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function getCalculationData() {
         let loanAmount = 0, propertyValueForLtv = 0;
+        
         switch(state.intent) {
-            case 'koupě': case 'investice':
+            case 'koupě':
+            case 'investice':
                 loanAmount = state.propertyValue - state.ownResources;
                 propertyValueForLtv = state.propertyValue;
                 break;
             case 'rekonstrukce':
-                loanAmount = state.ownResources; propertyValueForLtv = state.propertyValue;
+                loanAmount = state.ownResources;
+                propertyValueForLtv = state.propertyValue;
                 break;
             case 'výstavba':
                 propertyValueForLtv = state.landPrice + state.constructionBudget;
                 loanAmount = propertyValueForLtv - state.constructionOwnResources;
                 break;
             case 'refinancování':
-                loanAmount = state.refinanceLoanBalance; propertyValueForLtv = state.refinancePropertyValue;
+                loanAmount = state.refinanceLoanBalance;
+                propertyValueForLtv = state.refinancePropertyValue;
                 break;
         }
+        
         if (loanAmount <= 0 || propertyValueForLtv <= 0) return null;
         const ltv = (loanAmount / propertyValueForLtv) * 100;
         return { loanAmount, propertyValueForLtv, ltv };
@@ -165,37 +243,45 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateAmortizationData(principal, annualRate, years) {
         const monthlyPayment = calculateMonthlyPayment(principal, annualRate, years);
         if (monthlyPayment <= 0) return { balances: [], labels: [] };
+        
         let balance = principal;
         const monthlyRate = (annualRate / 100) / 12;
         const balances = [principal];
         const labels = [0];
+        
         for (let year = 1; year <= years; year++) {
             for (let month = 1; month <= 12; month++) {
-                balance -= (monthlyPayment - (balance * monthlyRate));
+                const interestPayment = balance * monthlyRate;
+                const principalPayment = monthlyPayment - interestPayment;
+                balance -= principalPayment;
+                if (balance < 0) balance = 0;
             }
-            balances.push(balance > 0 ? balance : 0);
+            balances.push(balance);
             labels.push(year);
         }
         return { balances, labels };
     }
 
-
     function updateCalculations() {
-        Object.keys(inputs).forEach(key => {
-            const inputElement = inputs[key];
+        // Update state from inputs
+        Object.keys(elements.inputs).forEach(key => {
+            const inputElement = elements.inputs[key];
             if (!inputElement) return;
+            
             let val = inputElement.value;
+            
+            // Handle percentage input for own resources
             if (inputElement.id === 'ownResources' && typeof val === 'string' && val.includes('%')) {
                 const percentage = parseFloat(val.replace('%', '').trim());
-                const propertyVal = parseNumericInput(inputs.propertyValue.value);
+                const propertyVal = parseNumericInput(elements.inputs.propertyValue.value);
                 if (!isNaN(percentage) && propertyVal > 0) {
-                     state.ownResources = (propertyVal * percentage) / 100;
-                     // Do not format back to percentage, show the calculated amount
-                     inputElement.value = new Intl.NumberFormat('cs-CZ', {useGrouping: false}).format(state.ownResources);
+                    state.ownResources = (propertyVal * percentage) / 100;
+                    inputElement.value = new Intl.NumberFormat('cs-CZ', {useGrouping: false}).format(state.ownResources);
                 }
             } else {
-                 val = inputElement.type === 'select-one' ? parseInt(val) : (inputElement.id.toLowerCase().includes('city') ? val : parseNumericInput(val));
-                 if (val !== null && val !== '') state[key] = val;
+                val = inputElement.type === 'select-one' ? parseInt(val) : 
+                     (inputElement.id.toLowerCase().includes('city') ? val : parseNumericInput(val));
+                if (val !== null && val !== '') state[key] = val;
             }
         });
         
@@ -206,164 +292,295 @@ document.addEventListener('DOMContentLoaded', function() {
         const rates = getInterestRates(ltv, state.fixation);
         const monthlyPayment = calculateMonthlyPayment(loanAmount, rates.likely, state.loanTerm);
 
-        displays.monthlyPayment.textContent = formatCurrency(monthlyPayment);
-        displays.ltv.textContent = `${ltv.toFixed(1)}%`;
-        displays.loanAmount.textContent = formatCurrency(loanAmount);
+        // Update displays
+        elements.displays.monthlyPayment.textContent = formatCurrency(monthlyPayment);
+        elements.displays.ltv.textContent = `${ltv.toFixed(1)}%`;
+        elements.displays.loanAmount.textContent = formatCurrency(loanAmount);
 
+        // Update DSTI if income is provided
         if (state.monthlyIncome > 0) {
             const dsti = ((monthlyPayment + state.monthlyLiabilities) / state.monthlyIncome) * 100;
-            displays.dsti.textContent = `${dsti.toFixed(1)}%`;
-            displays.dstiResult.classList.remove('hidden');
-            let tip = "Vaše DSTI je v optimálním rozmezí."; let colors = 'bg-green-100 border-green-300';
-            if (dsti > 50) { tip = "Vaše DSTI je vysoké. Banky obvykle vyžadují DSTI pod 50%."; colors = 'bg-red-100 border-red-300'; }
-            else if (dsti > 40) { tip = "Vaše DSTI je na hranici. Některé banky mohou být opatrnější."; colors = 'bg-yellow-100 border-yellow-300'; }
-            displays.dstiTip.textContent = tip; displays.dstiResult.className = `mt-8 p-4 border rounded-lg text-center ${colors}`;
-        } else displays.dstiResult.classList.add('hidden');
+            elements.displays.dsti.textContent = `${dsti.toFixed(1)}%`;
+            elements.displays.dstiResult.classList.remove('hidden');
+            
+            let tip = "Vaše DSTI je v optimálním rozmezí.";
+            let colors = 'glass-card';
+            if (dsti > 50) {
+                tip = "Vaše DSTI je vysoké. Banky obvykle vyžadují DSTI pod 50%.";
+                colors = 'mt-8 p-6 bg-red-100 border border-red-300 rounded-lg text-center';
+            } else if (dsti > 40) {
+                tip = "Vaše DSTI je na hranici. Některé banky mohou být opatrnější.";
+                colors = 'mt-8 p-6 bg-yellow-100 border border-yellow-300 rounded-lg text-center';
+            }
+            elements.displays.dstiTip.textContent = tip;
+            elements.displays.dstiResult.className = colors;
+        } else {
+            elements.displays.dstiResult.classList.add('hidden');
+        }
     }
 
-    function generateAnalysis(selectedOfferIndex = 1) { // Default to 'likely' offer
+    function generateAnalysis(selectedOfferIndex = 1) {
         const calcData = getCalculationData();
         if (!calcData) return;
 
         const { loanAmount, ltv } = calcData;
         const rates = getInterestRates(ltv, state.fixation);
         const offers = [
-            { name: "Nejlepší nabídka", rate: rates.best, benefit: "Pro klienty s nejlepší bonitou" },
-            { name: "Pravděpodobná nabídka", rate: rates.likely, benefit: "Nejčastější scénář" },
-            { name: "Nabídka Jistota", rate: rates.worst, benefit: "Konzervativní odhad" },
+            { name: "Nejlepší nabídka", rate: rates.best, benefit: "Pro klienty s nejlepší bonitou", color: "from-green-400 to-green-600" },
+            { name: "Pravděpodobná nabídka", rate: rates.likely, benefit: "Nejčastější scénář", color: "from-blue-400 to-blue-600" },
+            { name: "Konzervativní odhad", rate: rates.worst, benefit: "Bezpečný odhad", color: "from-orange-400 to-orange-600" },
         ];
 
+        // Generate offer cards
         document.getElementById('analysis-results').innerHTML = offers.map((offer, index) => {
             const monthlyPayment = calculateMonthlyPayment(loanAmount, offer.rate, state.loanTerm);
-            const borderClass = index === selectedOfferIndex ? 'border-green-500' : 'border-gray-200';
-            const topBanner = index === 1 ? '<div class="text-center font-bold text-green-600 bg-green-100 py-1 rounded-full mb-4 -mt-2">Pravděpodobná</div>' : '';
-            return `<div class="offer-card border-2 ${borderClass} rounded-lg p-6 flex flex-col" data-offer-index="${index}">
+            const isSelected = index === selectedOfferIndex;
+            const selectedClass = isSelected ? 'selected' : '';
+            const topBanner = index === 1 ? '<div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-400 to-green-600 text-white px-4 py-1 rounded-full text-sm font-bold">DOPORUČENO</div>' : '';
+            
+            return `<div class="offer-card ${selectedClass} relative border-2 rounded-2xl p-8" data-offer-index="${index}">
                     ${topBanner}
-                    <h4 class="text-xl font-bold text-center">${offer.name}</h4>
-                    <div class="my-4 text-center"><span class="text-4xl font-bold">${offer.rate.toFixed(2)}%</span><span class="text-gray-600"> p.a.</span></div>
-                    <div class="text-center mb-4"><p class="text-gray-600">Měsíční splátka</p><p class="text-2xl font-semibold">${formatCurrency(monthlyPayment)}</p></div>
-                    <div class="text-center text-sm bg-gray-100 p-3 rounded-md mt-auto"><p>${offer.benefit}</p></div>
+                    <div class="text-center">
+                        <h4 class="text-2xl font-bold mb-4">${offer.name}</h4>
+                        <div class="mb-6">
+                            <span class="text-5xl font-bold bg-gradient-to-r ${offer.color} bg-clip-text text-transparent">${offer.rate.toFixed(2)}%</span>
+                            <span class="text-gray-600 ml-2">p.a.</span>
+                        </div>
+                        <div class="mb-6">
+                            <p class="text-gray-600 mb-2">Měsíční splátka</p>
+                            <p class="text-3xl font-bold">${formatCurrency(monthlyPayment)}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl">
+                            <p class="text-sm text-gray-700">${offer.benefit}</p>
+                        </div>
+                    </div>
                 </div>`;
         }).join('');
         
+        // Add click handlers
         document.querySelectorAll('.offer-card').forEach(card => {
             card.addEventListener('click', () => {
                 generateAnalysis(parseInt(card.dataset.offerIndex));
             });
         });
 
+        // Generate metrics and chart for selected offer
         const selectedOffer = offers[selectedOfferIndex];
         const monthlyPayment = calculateMonthlyPayment(loanAmount, selectedOffer.rate, state.loanTerm);
         const totalPaid = monthlyPayment * 12 * state.loanTerm;
         const totalInterest = totalPaid - loanAmount;
         const firstPaymentInterest = loanAmount * ((selectedOffer.rate / 100) / 12);
-        
+
+        // Calculate balance after fixation period
         let balance = loanAmount;
-        for (let i = 0; i < state.fixation * 12; i++) balance -= (monthlyPayment - (balance * (selectedOffer.rate / 100) / 12));
+        const monthlyRate = (selectedOffer.rate / 100) / 12;
+        for (let i = 0; i < state.fixation * 12; i++) {
+            const interestPayment = balance * monthlyRate;
+            const principalPayment = monthlyPayment - interestPayment;
+            balance -= principalPayment;
+            if (balance < 0) balance = 0;
+        }
 
+        // Update key metrics
         document.getElementById('key-metrics').innerHTML = `
-            <p><span class="font-semibold">Výše úvěru:</span> <span class="float-right">${formatCurrency(loanAmount)}</span></p>
-            <p><span class="font-semibold">Celkem zaplaceno:</span> <span class="float-right">${formatCurrency(totalPaid)}</span></p>
-            <p><span class="font-semibold text-red-600">Přeplatek na úrocích:</span> <span class="float-right font-bold text-red-600">${formatCurrency(totalInterest)}</span></p>
-            <hr class="my-2">
-            <p class="text-sm"><span class="font-semibold">Rozpad 1. splátky:</span> <span class="float-right">${formatCurrency(monthlyPayment - firstPaymentInterest)} (jistina) + ${formatCurrency(firstPaymentInterest)} (úrok)</span></p>
-            <p><span class="font-semibold">Zůstatek po fixaci (${state.fixation} let):</span> <span class="float-right font-bold">${formatCurrency(balance)}</span></p>`;
+            <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                <div class="flex justify-between items-center">
+                    <span class="font-semibold text-white">Výše úvěru:</span>
+                    <span class="font-bold text-white">${formatCurrency(loanAmount)}</span>
+                </div>
+            </div>
+            <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                <div class="flex justify-between items-center">
+                    <span class="font-semibold text-white">Celkem zaplaceno:</span>
+                    <span class="font-bold text-white">${formatCurrency(totalPaid)}</span>
+                </div>
+            </div>
+            <div class="bg-red-500 bg-opacity-20 p-4 rounded-xl border border-red-300">
+                <div class="flex justify-between items-center">
+                    <span class="font-semibold text-red-100">Přeplatek na úrocích:</span>
+                    <span class="font-bold text-red-100">${formatCurrency(totalInterest)}</span>
+                </div>
+            </div>
+            <hr class="my-2 border-white border-opacity-20">
+            <p class="text-sm text-blue-100"><span class="font-semibold">Rozpad 1. splátky:</span><br>
+            ${formatCurrency(monthlyPayment - firstPaymentInterest)} (jistina) + ${formatCurrency(firstPaymentInterest)} (úrok)</p>
+            <p class="text-blue-100"><span class="font-semibold">Zůstatek po fixaci (${state.fixation} let):</span><br>
+            <span class="font-bold text-white">${formatCurrency(balance)}</span></p>
+        `;
 
+        // Generate AI recommendation
         let recommendation = '';
-        if (ltv < 80) recommendation = `S LTV ${ltv.toFixed(1)} % máte vynikající výchozí pozici. Dosáhnete na nejlepší úrokové sazby na trhu.`;
-        else if (ltv < 90) recommendation = `Vaše LTV je ${ltv.toFixed(1)} %. Stále máte na výběr z mnoha kvalitních nabídek, i když sazby mohou být mírně vyšší.`;
-        else recommendation = `LTV ve výši ${ltv.toFixed(1)} % znamená omezenější nabídku a vyšší sazby. Doporučujeme zvážit navýšení vlastních zdrojů.`;
+        if (ltv < 80) {
+            recommendation = `S LTV ${ltv.toFixed(1)}% máte vynikající výchozí pozici. Dosáhnete na nejlepší úrokové sazby na trhu.`;
+        } else if (ltv < 90) {
+            recommendation = `Vaše LTV je ${ltv.toFixed(1)}%. Stále máte na výběr z mnoha kvalitních nabídek, i když sazby mohou být mírně vyšší.`;
+        } else {
+            recommendation = `LTV ve výši ${ltv.toFixed(1)}% znamená omezenější nabídku a vyšší sazby. Doporučujeme zvážit navýšení vlastních zdrojů.`;
+        }
+        
         document.getElementById('ai-recommendation').textContent = recommendation;
         
-        const { balances, labels } = generateAmortizationData(loanAmount, selectedOffer.rate, state.loanTerm);
-        if(window.loanChart instanceof Chart) window.loanChart.destroy();
-        window.loanChart = new Chart(document.getElementById('loanChart').getContext('2d'), {
+        // Generate chart
+        generateLoanChart(loanAmount, selectedOffer.rate, state.loanTerm);
+    }
+
+    function generateLoanChart(principal, annualRate, years) {
+        const ctx = document.getElementById('loanChart').getContext('2d');
+        const { balances, labels } = generateAmortizationData(principal, annualRate, years);
+
+        if (window.loanChart instanceof Chart) window.loanChart.destroy();
+        
+        window.loanChart = new Chart(ctx, {
             type: 'line',
             data: { 
-                labels: labels, 
-                datasets: [{ 
+                labels: labels,
+                datasets: [{
                     label: 'Zůstatek úvěru',
                     data: balances,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
                     fill: true,
-                    tension: 0.1
-                }] 
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(255, 255, 255, 1)',
+                    pointBorderColor: 'rgba(255, 255, 255, 1)',
+                    pointHoverBackgroundColor: 'rgba(255, 255, 255, 1)',
+                    pointHoverBorderColor: 'rgba(255, 255, 255, 1)'
+                }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { ticks: { callback: value => formatCurrency(value) } } }
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        display: false 
+                    } 
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Roky',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Zůstatek úvěru',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            callback: value => formatCurrency(value),
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
             }
         });
     }
 
     // --- AI CHAT FUNCTIONS ---
-    const chatWindow = document.getElementById('chat-window');
-    const chatInput = document.getElementById('chat-input');
-    const chatSendBtn = document.getElementById('chat-send');
-    const chatSuggestions = document.getElementById('chat-suggestions');
-    
     function addChatMessage(content, sender, isHtml = false) {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`;
-        if (isHtml) bubble.appendChild(content);
-        else bubble.innerHTML = content.replace(/\n/g, '<br>');
-        chatWindow.appendChild(bubble);
+        
+        if (sender === 'ai') {
+            const header = document.createElement('div');
+            header.className = 'flex items-center gap-3 mb-3';
+            header.innerHTML = `
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white">🤖</div>
+                <strong class="text-gray-700">AI Poradce</strong>
+            `;
+            bubble.appendChild(header);
+        }
+        
+        const contentDiv = document.createElement('div');
+        if (isHtml) {
+            contentDiv.appendChild(content);
+        } else {
+            contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+        }
+        bubble.appendChild(contentDiv);
+        
+        elements.chat.window.appendChild(bubble);
         bubble.scrollIntoView({ behavior: "smooth", block: "end" });
         return bubble;
     }
 
     function renderSuggestions(suggestions = []) {
-        chatSuggestions.innerHTML = '';
+        elements.chat.suggestions.innerHTML = '';
         if (suggestions.length > 0) {
             suggestions.forEach(text => {
                 const btn = document.createElement('button');
                 btn.className = 'suggestion-btn';
                 btn.textContent = text;
-                btn.onclick = () => { chatInput.value = text; handleChatSubmit(); };
-                chatSuggestions.appendChild(btn);
+                btn.onclick = () => {
+                    elements.chat.input.value = text;
+                    handleChatSubmit();
+                };
+                elements.chat.suggestions.appendChild(btn);
             });
         }
     }
-    
+
     function createResultVisualInChat(calcData) {
         const container = document.createElement('div');
+        container.className = 'mt-4';
         const rates = getInterestRates(calcData.ltv, state.fixation);
         
         container.innerHTML = `
-            <h4 class="font-bold text-lg mb-2 text-center">Přehled variant</h4>
-            <div class="space-y-3">
-                ${Object.entries(rates).map(([type, rate]) => `
-                    <div class="p-3 bg-white rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-bold capitalize">${type === 'best' ? 'Nejlepší' : (type === 'likely' ? 'Pravděpodobná' : 'Jistota')}</p>
-                                <p class="text-sm text-gray-500">${rate.toFixed(2)} % p.a.</p>
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h4 class="font-bold text-xl mb-4 text-center text-gray-800">Přehled variant pro váš úvěr</h4>
+                <div class="space-y-4">
+                    ${Object.entries(rates).map(([type, rate]) => {
+                        const monthlyPayment = calculateMonthlyPayment(calcData.loanAmount, rate, state.loanTerm);
+                        const typeLabel = type === 'best' ? 'Nejlepší' : (type === 'likely' ? 'Pravděpodobná' : 'Konzervativní');
+                        return `
+                            <div class="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                                <div>
+                                    <p class="font-bold text-lg">${typeLabel}</p>
+                                    <p class="text-sm text-gray-600">${rate.toFixed(2)}% p.a.</p>
+                                </div>
+                                <p class="text-xl font-bold text-blue-600">${formatCurrency(monthlyPayment)}</p>
                             </div>
-                            <p class="text-lg font-semibold">${formatCurrency(calculateMonthlyPayment(calcData.loanAmount, rate, state.loanTerm))}</p>
-                        </div>
-                    </div>
-                `).join('')}
+                        `;
+                    }).join('')}
+                </div>
+                <div class="mt-4 text-center">
+                    <button onclick="window.switchToCalculatorAnalysis()" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition">
+                        Zobrazit detailní analýzu
+                    </button>
+                </div>
             </div>
         `;
+        
         addChatMessage(container, 'ai', true);
     }
 
     async function handleChatSubmit() {
-        const userMessage = chatInput.value.trim();
+        const userMessage = elements.chat.input.value.trim();
         if (!userMessage) return;
 
         addChatMessage(userMessage, 'user');
-        chatInput.value = '';
+        elements.chat.input.value = '';
         renderSuggestions([]);
-        const thinkingBubble = addChatMessage('', 'ai');
-        thinkingBubble.classList.add('thinking');
+        
+        const thinkingBubble = addChatMessage('<span class="thinking-dots">Přemýšlím</span>', 'ai');
         
         updateCalculations();
         
         try {
-            const response = await fetch('/api/gemini', {
+            // Try API call first
+            const response = await fetch('/.netlify/functions/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -374,66 +591,142 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                 const errorData = await response.json();
-                 throw new Error(errorData.error || `API call failed: ${response.status}`);
+                throw new Error(`API call failed: ${response.status}`);
             }
             
             const aiResponse = await response.json();
 
+            // Update state if AI provided updates
             if (aiResponse.updateState) {
                 Object.assign(state, aiResponse.updateState);
-                Object.keys(aiResponse.updateState).forEach(key => { if (inputs[key]) inputs[key].value = state[key]; });
+                Object.keys(aiResponse.updateState).forEach(key => {
+                    if (elements.inputs[key]) {
+                        elements.inputs[key].value = state[key];
+                    }
+                });
                 updateCalculations();
             }
             
-            thinkingBubble.innerHTML = aiResponse.responseText.replace(/\n/g, '<br>') || "Omlouvám se, nastala chyba.";
-            thinkingBubble.classList.remove('thinking');
+            // Update thinking bubble with response
+            thinkingBubble.innerHTML = thinkingBubble.innerHTML.replace('<span class="thinking-dots">Přemýšlím</span>', '') + 
+                                     (aiResponse.responseText || "Omlouvám se, nastala chyba.").replace(/\n/g, '<br>');
             
-            if(aiResponse.performCalculation) {
+            // Show calculation results if requested
+            if (aiResponse.performCalculation) {
                 const calcData = getCalculationData();
-                if (calcData && calcData.loanAmount > 0) createResultVisualInChat(calcData);
-                else addChatMessage("Bohužel chybí klíčové údaje pro výpočet. Zkuste prosím začít znovu.", 'ai');
+                if (calcData && calcData.loanAmount > 0) {
+                    createResultVisualInChat(calcData);
+                } else {
+                    addChatMessage("Bohužel chybí klíčové údaje pro výpočet. Zkuste prosím začít znovu.", 'ai');
+                }
             }
 
-            renderSuggestions(aiResponse.suggestions);
+            renderSuggestions(aiResponse.suggestions || []);
             if (aiResponse.conversationStep) aiConversationState.step = aiResponse.conversationStep;
             
-            if(userMessage.toLowerCase().includes('spojit se specialistou')) {
-                 switchMode('calculator'); currentStep = 5; updateUI();
+            // Handle special commands
+            if (userMessage.toLowerCase().includes('spojit se specialistou') || userMessage.toLowerCase().includes('kontakt')) {
+                switchMode('calculator');
+                currentStep = 5;
+                updateUI();
             }
 
         } catch (error) {
             console.error("Error processing AI response:", error);
-            thinkingBubble.innerHTML = `Omlouvám se, došlo k technické chybě: ${error.message}. Zkuste to prosím znovu.`;
-            thinkingBubble.classList.remove('thinking');
+            // Fallback to simple responses
+            const fallbackResponse = generateFallbackResponse(userMessage);
+            thinkingBubble.innerHTML = thinkingBubble.innerHTML.replace('<span class="thinking-dots">Přemýšlím</span>', fallbackResponse.responseText);
+            renderSuggestions(fallbackResponse.suggestions);
+            
+            if (fallbackResponse.performCalculation) {
+                const calcData = getCalculationData();
+                if (calcData && calcData.loanAmount > 0) {
+                    setTimeout(() => createResultVisualInChat(calcData), 100);
+                }
+            }
         }
     }
 
+    function generateFallbackResponse(userMessage) {
+        const message = userMessage.toLowerCase();
+        
+        if (message.includes('spočítat') || message.includes('kalkulace') || message.includes('hypotéku')) {
+            if (!state.monthlyIncome) {
+                return {
+                    responseText: 'Pro přesný výpočet hypotéky potřebuji pár základních údajů. Co plánujete?',
+                    suggestions: ['Koupě bytu', 'Výstavba domu', 'Refinancování'],
+                    performCalculation: false
+                };
+            } else {
+                return {
+                    responseText: 'Na základě vašich údajů jsem připravil výpočet hypotéky:',
+                    suggestions: ['Změnit parametry', 'Začít znovu', 'Spojit se specialistou'],
+                    performCalculation: true
+                };
+            }
+        } else if (message.includes('sazby') || message.includes('úrok')) {
+            return {
+                responseText: 'Aktuální úrokové sazby se pohybují podle LTV a fixace:\n\n• Pro LTV do 80%: od 3.99% (5 let fixace)\n• Pro LTV do 90%: od 4.49% (5 let fixace)\n\nChcete spočítat konkrétní nabídku?',
+                suggestions: ['Spočítat hypotéku', 'Více o sazbách', 'Jak snížit sazbu'],
+                performCalculation: false
+            };
+        } else if (message.includes('specialista') || message.includes('kontakt')) {
+            setTimeout(() => {
+                switchMode('calculator');
+                currentStep = 5;
+                updateUI();
+            }, 100);
+            return {
+                responseText: 'Skvělé! Přesunul jsem vás na formulář, kde můžete zadat kontaktní údaje. Náš specialista se vám brzy ozve s nejlepšími nabídkami.',
+                suggestions: [],
+                performCalculation: false
+            };
+        }
+        
+        return {
+            responseText: 'Jsem tu, abych vám pomohl s hypotékou. Můžu vám spočítat hypotéku, poradit se sazbami nebo odpovědět na jakékoliv dotazy.',
+            suggestions: ['Spočítat hypotéku', 'Aktuální sazby', 'Jak na refinancování'],
+            performCalculation: false
+        };
+    }
+
     // --- EVENT LISTENERS ---
-    modeButtons.forEach(btn => btn.addEventListener('click', () => switchMode(btn.dataset.mode)));
-    prevBtn.addEventListener('click', () => navigate(-1));
-    nextBtn.addEventListener('click', () => navigate(1));
+    elements.modeButtons.forEach(btn => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+    });
+
+    elements.prevBtn.addEventListener('click', () => navigate(-1));
+    elements.nextBtn.addEventListener('click', () => navigate(1));
     
-    intentButtons.forEach(btn => {
+    elements.intentButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             setIntent(btn.dataset.intent);
-            intentButtons.forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50'));
-            btn.classList.add('border-blue-500', 'bg-blue-50');
             navigate(1);
         });
     });
 
-    Object.values(inputs).forEach(input => {
-        if(input) {
+    // Add input listeners
+    Object.values(elements.inputs).forEach(input => {
+        if (input) {
             input.addEventListener('input', updateCalculations);
             input.addEventListener('change', updateCalculations);
         }
     });
-    
-    inputs.ownResources.addEventListener('blur', updateCalculations);
 
-    leadForm.addEventListener('submit', (e) => {
-        e.preventDefault(); 
+    // Special handler for own resources percentage
+    if (elements.inputs.ownResources) {
+        elements.inputs.ownResources.addEventListener('blur', updateCalculations);
+    }
+
+    // Chat listeners
+    elements.chat.sendBtn.addEventListener('click', handleChatSubmit);
+    elements.chat.input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleChatSubmit();
+    });
+
+    // Form submission
+    elements.leadForm.addEventListener('submit', (e) => {
+        e.preventDefault();
         const myForm = e.target;
         const formData = new FormData(myForm);
         
@@ -443,67 +736,74 @@ document.addEventListener('DOMContentLoaded', function() {
             body: new URLSearchParams(formData).toString(),
         })
         .then(() => {
-            leadForm.style.display = 'none';
+            elements.leadForm.style.display = 'none';
             document.getElementById('form-success').classList.remove('hidden');
         })
-        .catch((error) => alert(error));
+        .catch((error) => {
+            console.error('Form submission error:', error);
+            alert('Nastala chyba při odesílání formuláře. Zkuste to prosím znovu.');
+        });
     });
-
-    chatSendBtn.addEventListener('click', handleChatSubmit);
-    chatInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleChatSubmit());
-    renderSuggestions(["Spočítat hypotéku", "Jaké jsou aktuální sazby?"]);
 
     // --- INITIALIZATION ---
     function initialize() {
         document.getElementById('last-updated').textContent = rateDatabase.lastUpdated.toLocaleDateString('cs-CZ');
-        const counter = document.getElementById('live-users-counter');
         
+        // Live counter animation
         function updateLiveUsers() {
             const hour = new Date().getHours();
-            let baseUsers;
-            if (hour >= 9 && hour < 17) { // Peak time
-                baseUsers = 25;
-            } else if (hour >= 17 && hour < 22) { // Evening
-                baseUsers = 15;
-            } else { // Night
-                baseUsers = 5;
-            }
+            let baseUsers = hour >= 9 && hour < 17 ? 25 : (hour >= 17 && hour < 22 ? 15 : 5);
             const randomFactor = Math.floor(Math.random() * 5) - 2;
-            counter.textContent = `${baseUsers + randomFactor} lidí právě počítá hypotéku`;
+            document.getElementById('live-users-counter').textContent = 
+                `${baseUsers + randomFactor} lidí právě počítá hypotéku`;
         }
         setInterval(updateLiveUsers, 4000);
         updateLiveUsers();
-        
 
-        const stats = {
-            mediated: parseInt(localStorage.getItem('statsMediated')) || 8400000000,
-            clients: parseInt(localStorage.getItem('statsClients')) || 12847,
-        }
-
+        // Animate stats counters
         document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(2)} mld Kč`;
         document.getElementById('stats-clients').textContent = stats.clients.toLocaleString('cs-CZ');
-
 
         setInterval(() => {
             stats.mediated += Math.floor(Math.random() * 50000);
             stats.clients += Math.random() > 0.7 ? 1 : 0;
-            localStorage.setItem('statsMediated', stats.mediated);
-            localStorage.setItem('statsClients', stats.clients);
             document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(2)} mld Kč`;
             document.getElementById('stats-clients').textContent = stats.clients.toLocaleString('cs-CZ');
         }, 2500);
 
-        state.intent = null;
-        Object.keys(inputs).forEach(key => {
-            const el = inputs[key], val = state[key];
-            if (el && val !== null) el.value = el.type === 'select-one' ? val : (el.id === 'city' ? val : new Intl.NumberFormat('cs-CZ', {useGrouping: false}).format(val));
-        });
+        // Initialize chat suggestions
+        renderSuggestions(["Spočítat hypotéku", "Aktuální sazby", "Jak na refinancování"]);
+        
+        // Set initial intent
         setIntent('koupě');
-        intentButtons[0].classList.add('border-blue-500', 'bg-blue-50');
-        currentStep = 1; state.intent = 'koupě';
-        updateUI(); updateCalculations();
+        elements.intentButtons[0].classList.add('selected');
+        
+        // Initialize form values
+        Object.keys(elements.inputs).forEach(key => {
+            const el = elements.inputs[key];
+            const val = state[key];
+            if (el && val !== null && val !== undefined) {
+                if (el.type === 'select-one') {
+                    el.value = val;
+                } else if (el.id === 'city') {
+                    el.value = val;
+                } else if (typeof val === 'number') {
+                    el.value = new Intl.NumberFormat('cs-CZ', {useGrouping: false}).format(val);
+                }
+            }
+        });
+        
+        updateUI();
+        updateCalculations();
     }
+
+    // Make functions globally accessible for inline event handlers
+    window.switchMode = switchMode;
+    window.switchToCalculatorAnalysis = function() {
+        switchMode('calculator');
+        currentStep = 4;
+        updateUI();
+    };
 
     initialize();
 });
-
