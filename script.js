@@ -457,22 +457,38 @@ document.addEventListener('DOMContentLoaded', function() {
     function initialize() {
         document.getElementById('last-updated').textContent = rateDatabase.lastUpdated.toLocaleDateString('cs-CZ');
         const counter = document.getElementById('live-users-counter');
-        let liveUsers = 17;
-        setInterval(() => {
-            liveUsers += (Math.random() > 0.5 ? 1 : -1);
-            if (liveUsers < 12) liveUsers = 12;
-            counter.textContent = `${liveUsers} lidí právě počítá hypotéku`;
-        }, 3500);
+        
+        function updateLiveUsers() {
+            const hour = new Date().getHours();
+            let baseUsers;
+            if (hour >= 9 && hour < 17) { // Peak time
+                baseUsers = 25;
+            } else if (hour >= 17 && hour < 22) { // Evening
+                baseUsers = 15;
+            } else { // Night
+                baseUsers = 5;
+            }
+            const randomFactor = Math.floor(Math.random() * 5) - 2;
+            counter.textContent = `${baseUsers + randomFactor} lidí právě počítá hypotéku`;
+        }
+        setInterval(updateLiveUsers, 4000);
+        updateLiveUsers();
+        
 
         const stats = {
-            mediated: 8400000000,
-            clients: 12847,
-            savings: 286000
+            mediated: parseInt(localStorage.getItem('statsMediated')) || 8400000000,
+            clients: parseInt(localStorage.getItem('statsClients')) || 12847,
         }
+
+        document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(2)} mld Kč`;
+        document.getElementById('stats-clients').textContent = stats.clients.toLocaleString('cs-CZ');
+
 
         setInterval(() => {
             stats.mediated += Math.floor(Math.random() * 50000);
             stats.clients += Math.random() > 0.7 ? 1 : 0;
+            localStorage.setItem('statsMediated', stats.mediated);
+            localStorage.setItem('statsClients', stats.clients);
             document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(2)} mld Kč`;
             document.getElementById('stats-clients').textContent = stats.clients.toLocaleString('cs-CZ');
         }, 2500);

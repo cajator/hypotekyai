@@ -10,7 +10,12 @@ export default async (req, context) => {
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            return new Response(JSON.stringify({ error: "API key not configured." }), {
+            return new Response(JSON.stringify({ 
+                responseText: "Omlouvám se, AI Poradce není správně nakonfigurován. Chybí API klíč.",
+                suggestions: [],
+                conversationStep: 'start',
+                performCalculation: false,
+             }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -44,8 +49,13 @@ export default async (req, context) => {
         if (!apiResponse.ok) {
             const errorBody = await apiResponse.text();
             console.error("Gemini API Error:", errorBody);
-            return new Response(JSON.stringify({ error: `Gemini API failed: ${apiResponse.statusText}` }), {
-                status: apiResponse.status,
+            return new Response(JSON.stringify({ 
+                responseText: `Omlouvám se, došlo k chybě v komunikaci s AI službou (Stav: ${apiResponse.status}). Zkuste to prosím znovu.`,
+                suggestions: [],
+                conversationStep: 'start',
+                performCalculation: false,
+            }), {
+                status: 500,
                 headers: { 'Content-Type': 'application/json' },
             });
         }
@@ -59,7 +69,12 @@ export default async (req, context) => {
 
     } catch (error) {
         console.error("Error in Netlify function:", error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ 
+             responseText: `Omlouvám se, nastala kritická chyba na serveru: ${error.message}. Zkuste to prosím později.`,
+             suggestions: [],
+             conversationStep: 'start',
+             performCalculation: false,
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
         });
