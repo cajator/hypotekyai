@@ -43,7 +43,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     let aiConversationState = { step: 'start', context: {} };
-    let stats = { mediated: 8400000000, clients: 12847 };
+    
+    // Vylepšené statistiky s sessionStorage pro trvalost během session
+    let stats = {
+        mediated: parseInt(sessionStorage.getItem('statsMediated')) || 8400000000,
+        clients: parseInt(sessionStorage.getItem('statsClients')) || 12847
+    };
 
     // --- ELEMENT SELECTORS ---
     const elements = {
@@ -336,7 +341,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const monthlyPayment = calculateMonthlyPayment(loanAmount, offer.rate, state.loanTerm);
             const isSelected = index === selectedOfferIndex;
             const selectedClass = isSelected ? 'selected' : '';
-            const topBanner = index === 1 ? '<div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-400 to-green-600 text-white px-4 py-1 rounded-full text-sm font-bold">DOPORUČENO</div>' : '';
+            // Změněný banner text - motivační místo zavádějícího "doporučeno"
+            const topBanner = index === 1 ? '<div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-1 rounded-full text-sm font-bold">ZDARMA KONZULTACE</div>' : '';
             
             return `<div class="offer-card ${selectedClass} relative border-2 rounded-2xl p-8" data-offer-index="${index}">
                     ${topBanner}
@@ -420,15 +426,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('ai-recommendation').textContent = recommendation;
         
-        // Generate chart
+        // Generate chart - OPRAVENÝ graf bez rolování
         generateLoanChart(loanAmount, selectedOffer.rate, state.loanTerm);
     }
 
+    // OPRAVENÁ funkce pro graf - pevná výška, bez automatického rolování
     function generateLoanChart(principal, annualRate, years) {
-        const ctx = document.getElementById('loanChart').getContext('2d');
+        const canvas = document.getElementById('loanChart');
+        const ctx = canvas.getContext('2d');
+        
+        // Nastavit pevnou výška canvasu
+        canvas.style.height = '300px';
+        
         const { balances, labels } = generateAmortizationData(principal, annualRate, years);
 
-        if (window.loanChart instanceof Chart) window.loanChart.destroy();
+        if (window.loanChart instanceof Chart) {
+            window.loanChart.destroy();
+        }
         
         window.loanChart = new Chart(ctx, {
             type: 'line',
@@ -449,7 +463,13 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: false, // KLÍČOVÉ - zabrání změně velikosti
+                interaction: {
+                    intersect: false
+                },
+                animation: {
+                    duration: 1000
+                },
                 plugins: { 
                     legend: { 
                         display: false 
@@ -512,7 +532,12 @@ document.addEventListener('DOMContentLoaded', function() {
         bubble.appendChild(contentDiv);
         
         elements.chat.window.appendChild(bubble);
-        bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+        // OPRAVENÉ - bez automatického scrollování, které způsobuje problémy
+        // bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+        
+        // Místo toho pouze scrollovat chat okno dolů
+        elements.chat.window.scrollTop = elements.chat.window.scrollHeight;
+        
         return bubble;
     }
 
@@ -579,7 +604,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCalculations();
         
         try {
-            // Try API call first
             const response = await fetch('/.netlify/functions/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -745,31 +769,69 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- VYLEPŠENÉ LIVE COUNTER & STATISTICS ---
+    function getDynamicUserCount() {
+        const now = new Date();
+        const hour = now.getHours();
+        const dayOfWeek = now.getDay(); // 0=neděle, 1=pondělí...
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        
+        let baseUsers;
+        
+        if (isWeekend) {
+            // Víkend - méně aktivní
+            if (hour >= 10 && hour < 16) baseUsers = 12; // dopoledne/odpoledne
+            else if (hour >= 16 && hour < 21) baseUsers = 18; // večer
+            else baseUsers = 4; // noc/ráno
+        } else {
+            // Pracovní den
+            if (hour >= 8 && hour < 10) baseUsers = 28; // ranní špička
+            else if (hour >= 10 && hour < 17) baseUsers = 32; // pracovní doba
+            else if (hour >= 17 && hour < 22) baseUsers = 25; // večer
+            else if (hour >= 22 || hour < 6) baseUsers = 3; // noc
+            else baseUsers = 8; // časné ráno
+        }
+        
+        // Přidat náhodnou variaci ±3
+        const randomFactor = Math.floor(Math.random() * 7) - 3;
+        return Math.max(1, baseUsers + randomFactor);
+    }
+
+    function updateLiveUsers() {
+        const count = getDynamicUserCount();
+        const counter = document.getElementById('live-users-counter');
+        if (counter) {
+            counter.textContent = `${count} lidí právě počítá hypotéku`;
+        }
+    }
+
     // --- INITIALIZATION ---
     function initialize() {
         document.getElementById('last-updated').textContent = rateDatabase.lastUpdated.toLocaleDateString('cs-CZ');
         
-        // Live counter animation
-        function updateLiveUsers() {
-            const hour = new Date().getHours();
-            let baseUsers = hour >= 9 && hour < 17 ? 25 : (hour >= 17 && hour < 22 ? 15 : 5);
-            const randomFactor = Math.floor(Math.random() * 5) - 2;
-            document.getElementById('live-users-counter').textContent = 
-                `${baseUsers + randomFactor} lidí právě počítá hypotéku`;
-        }
-        setInterval(updateLiveUsers, 4000);
+        // Vylepšené live counter s dynamickou maticí
         updateLiveUsers();
+        setInterval(updateLiveUsers, 3500); // Každé 3.5 sekundy
 
-        // Animate stats counters
-        document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(2)} mld Kč`;
-        document.getElementById('stats-clients').textContent = stats.clients.toLocaleString('cs-CZ');
-
-        setInterval(() => {
-            stats.mediated += Math.floor(Math.random() * 50000);
-            stats.clients += Math.random() > 0.7 ? 1 : 0;
+        // Statistiky s sessionStorage pro trvalost během session
+        function updateStats() {
             document.getElementById('stats-mediated').textContent = `${(stats.mediated / 1000000000).toFixed(2)} mld Kč`;
             document.getElementById('stats-clients').textContent = stats.clients.toLocaleString('cs-CZ');
-        }, 2500);
+        }
+        
+        updateStats();
+
+        setInterval(() => {
+            // Realistické přírůstky
+            stats.mediated += Math.floor(Math.random() * 75000) + 25000; // 25k-100k
+            if (Math.random() > 0.8) stats.clients += 1; // 20% šance na nového klienta
+            
+            // Uložit do sessionStorage
+            sessionStorage.setItem('statsMediated', stats.mediated);
+            sessionStorage.setItem('statsClients', stats.clients);
+            
+            updateStats();
+        }, 4000);
 
         // Initialize chat suggestions
         renderSuggestions(["Spočítat hypotéku", "Aktuální sazby", "Jak na refinancování"]);
