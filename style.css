@@ -1,4 +1,4 @@
-/* Hypotéka AI - CSS v6.0 (Production Ready) */
+/* Hypotéka AI - CSS v7.0 (Production Ready) */
 
 :root {
     --primary-blue: #0066FF;
@@ -35,7 +35,7 @@ body {
 }
 
 .container {
-    max-width: 1100px;
+    max-width: 900px; /* Centered and more compact layout */
     margin: 0 auto;
     padding: 0 24px;
 }
@@ -87,6 +87,13 @@ body {
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .btn-primary {
@@ -218,11 +225,40 @@ h1 {
 }
 
 /* --- TIMELINE --- */
+.timeline-container {
+    position: relative;
+    margin-bottom: 40px;
+}
+
 .timeline {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-progress-bar {
+    position: absolute;
+    top: 15px; /* Vertically center */
+    left: 10%;
+    right: 10%;
+    height: 4px;
+    background: var(--border-color);
+    z-index: 0;
+}
+
+.timeline-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0; /* Updated by JS */
+    background: var(--primary-blue);
+    transition: width 0.4s ease;
+}
+
+.timeline-step {
     text-align: center;
 }
 
@@ -482,7 +518,7 @@ h1 {
 /* --- AI MODE --- */
 .ai-chat-layout {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 280px;
     gap: 24px;
     min-height: 500px;
 }
@@ -495,8 +531,11 @@ h1 {
 .chat-messages {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 10px; /* for scrollbar */
+    padding: 10px;
     margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--background-light);
 }
 
 .message {
@@ -507,13 +546,14 @@ h1 {
 .message-content {
     padding: 12px 16px;
     border-radius: var(--border-radius);
+    word-wrap: break-word;
 }
 
 .message-ai {
     justify-content: flex-start;
 }
 .message-ai .message-content {
-    background: var(--background-light);
+    background: var(--background-white);
     border: 1px solid var(--border-color);
 }
 
@@ -529,6 +569,8 @@ h1 {
     display: flex;
     gap: 5px;
     align-items: center;
+    background: var(--background-white);
+    border: 1px solid var(--border-color);
 }
 .dot {
     width: 8px;
@@ -551,6 +593,7 @@ h1 {
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 16px;
+    min-height: 34px;
 }
 .suggestion-btn {
     padding: 8px 16px;

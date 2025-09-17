@@ -1,4 +1,4 @@
-// Hypotéka AI - JavaScript v6.0 (Production Ready)
+// Hypotéka AI - JavaScript v7.0 (Production Ready & Bug Fixed)
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calculatorModeDiv: document.getElementById('calculator-mode'),
         aiModeDiv: document.getElementById('ai-mode'),
         timelineSteps: document.querySelectorAll('.timeline-step'),
+        timelineProgressBar: document.querySelector('.timeline-progress-bar::after'),
         stepContents: document.querySelectorAll('.step-content'),
         prevBtn: document.getElementById('prev-btn'),
         nextBtn: document.getElementById('next-btn'),
@@ -53,17 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
         aiChatSendBtn: document.getElementById('ai-chat-send'),
         aiChatSuggestions: document.getElementById('ai-chat-suggestions'),
         aiSummary: document.getElementById('ai-summary'),
-        // Navigation buttons
-        navCalculator: document.getElementById('nav-calculator'),
-        navAbout: document.getElementById('nav-about'),
-        navGdpr: document.getElementById('nav-gdpr'),
         navContact: document.getElementById('nav-contact'),
-        footerAbout: document.getElementById('footer-about'),
-        footerGdpr: document.getElementById('footer-gdpr'),
-        // Sidebar actions
-        sidebarCalculatorBtn: document.querySelector('.sidebar-btn[data-action="switch-to-calculator"]'),
         sidebarContactBtn: document.querySelector('.sidebar-btn[data-action="request-contact"]'),
-        // Modal
         modal: document.getElementById('modal'),
         modalTitle: document.getElementById('modal-title'),
         modalBody: document.getElementById('modal-body'),
@@ -99,6 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
         DOMElements.modeBtnAi.classList.toggle('active', state.mode === 'ai');
 
         // Timeline and steps
+        const progressPercentage = ((state.currentStep - 1) / 4) * 100;
+        document.querySelector('.timeline-progress-bar').style.setProperty('--progress-width', `${progressPercentage}%`);
+
+
         DOMElements.timelineSteps.forEach((step, index) => {
             const stepNum = index + 1;
             step.classList.toggle('active', stepNum === state.currentStep);
@@ -114,6 +110,33 @@ document.addEventListener('DOMContentLoaded', () => {
         DOMElements.prevBtn.classList.toggle('hidden', state.currentStep === 1);
         DOMElements.nextBtn.textContent = state.currentStep === 5 ? 'Začít znovu' : (state.currentStep === 4 ? 'Získat nabídky' : 'Další →');
     };
+    
+    // --- NAVIGATION LOGIC ---
+    const goToStep = (stepNumber) => {
+        state.mode = 'calculator';
+        state.currentStep = stepNumber;
+        if(state.currentStep === 4) generateAnalysis();
+        render();
+    };
+
+    const navigate = (direction) => {
+        const newStep = state.currentStep + direction;
+        
+        if (direction > 0 && !validateStep(state.currentStep)) return;
+
+        if (newStep > 5) {
+            // Reset and start over
+            Object.assign(state, { currentStep: 1, intent: null, propertyValue: 0, constructionCost: 0, landValue: 0, ownResources: 0, loanAmount: 0, monthlyIncome: 0, otherLoans: 0, refinanceAmount: 0, extraLoan: 0 });
+            document.querySelectorAll('.intent-card').forEach(c => c.classList.remove('selected'));
+            DOMElements.contactForm.reset();
+            DOMElements.formSuccessMessage.classList.add('hidden');
+            DOMElements.contactForm.style.display = 'grid';
+            render();
+        } else {
+            goToStep(newStep);
+        }
+    };
+
 
     // --- CALCULATOR LOGIC ---
     const calculateLoan = () => {
@@ -146,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getInterestRate = () => {
-        // Simplified rate logic. In reality, this would be a complex lookup.
         const baseRate = 4.29;
         let rate = baseRate;
         if (state.ltv > 80) rate += 0.4;
@@ -154,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.fixation === 3) rate += 0.1;
         if (state.fixation === 7) rate -= 0.1;
         if (state.fixation === 10) rate -= 0.2;
-        return Math.max(2.99, rate); // a floor for the rate
+        return Math.max(2.99, rate);
     };
 
     const calculateMonthlyPayment = (principal, annualRate, years) => {
@@ -189,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- DYNAMIC FORM RENDERING (Step 2) ---
     const renderParametersForm = () => {
         let html = '';
         const { intent } = state;
@@ -261,12 +282,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         DOMElements.parametersFormContainer.innerHTML = html;
-        addInputEventListeners(); // Re-attach listeners to new inputs
+        addInputEventListeners();
     };
 
-    // --- ANALYSIS & CHART (Step 4) ---
     const generateAnalysis = () => {
-        // 1. Generate Offers
         const baseRate = getInterestRate();
         const offers = [
             { name: 'Nejvýhodnější nabídka', rate: baseRate - 0.15, best: true },
@@ -286,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
 
-        // 2. Generate Metrics
         const totalPaid = state.monthlyPayment * state.loanTerm * 12;
         const totalInterest = totalPaid - state.loanAmount;
         DOMElements.metricsContainer.innerHTML = `
@@ -297,7 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="metric-item"><span>Přeplatek na úrocích:</span> <span style="color:var(--danger-red)">${formatCurrency(totalInterest)}</span></div>
         `;
 
-        // 3. Generate Chart
         generateAmortizationChart();
     };
 
@@ -318,12 +335,18 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let year = 0; year <= loanTerm; year++) {
             labels.push(`Rok ${year}`);
             data.push(Math.round(balance));
-            for (let month = 0; month < 12; month++) {
-                const interest = balance * (rate / 100 / 12);
-                balance -= (monthlyPayment - interest);
+            if (year < loanTerm) { // Calculate next year's balance
+                for (let month = 0; month < 12; month++) {
+                    const interest = balance * (rate / 100 / 12);
+                    balance -= (monthlyPayment - interest);
+                }
+            } else {
+                 balance = 0; // Ensure it ends at zero
             }
             balance = Math.max(0, balance);
         }
+        
+        data[data.length - 1] = 0; // Force the last point to be zero
 
         state.chartInstance = new Chart(DOMElements.amortizationChartCanvas, {
             type: 'line',
@@ -346,32 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // --- NAVIGATION LOGIC ---
-    const navigate = (direction) => {
-        const newStep = state.currentStep + direction;
-        
-        if (direction > 0 && !validateStep(state.currentStep)) return;
-
-        if (newStep > 5) {
-            // Reset and start over
-            Object.assign(state, { currentStep: 1, intent: null, propertyValue: 0, /*... reset all relevant fields ...*/ });
-            document.querySelectorAll('.intent-card').forEach(c => c.classList.remove('selected'));
-            DOMElements.contactForm.reset();
-            DOMElements.formSuccessMessage.classList.add('hidden');
-            DOMElements.contactForm.style.display = 'grid';
-        } else {
-            state.currentStep = newStep;
-        }
-
-        if (state.currentStep === 4) {
-            generateAnalysis();
-        }
-        
-        render();
-    };
-
     const validateStep = (step) => {
-        // Basic validation, can be improved
         if (step === 1) return state.intent !== null;
         if (step === 2) return state.loanAmount > 0;
         if (step === 3) return state.monthlyIncome > 0;
@@ -393,18 +391,19 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessageToChat('loading');
 
         try {
+            state.aiConversation.push({ role: 'user', parts: [{ text: userMessage }] });
+
             const response = await fetch('/.netlify/functions/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userMessage,
-                    state: { // Send only necessary state
+                    conversation: state.aiConversation,
+                    state: { 
                         intent: state.intent,
                         propertyValue: state.propertyValue,
                         ownResources: state.ownResources,
                         monthlyIncome: state.monthlyIncome
-                    },
-                    aiConversationState: state.aiConversation
+                    }
                 })
             });
 
@@ -413,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const aiData = await response.json();
             
             removeLoadingMessage();
-            addMessageToChat('ai', aiData.responseText);
+            addMessageToChat('model', aiData.responseText);
             
             if(aiData.updateState) {
                 Object.assign(state, aiData.updateState);
@@ -431,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("AI Chat Error:", error);
             removeLoadingMessage();
-            addMessageToChat('ai', "Omlouvám se, došlo k technické chybě. Zkuste to prosím znovu.");
+            addMessageToChat('model', "Omlouvám se, došlo k technické chybě. Zkuste to prosím znovu, nebo se přepněte do kalkulačky.");
         } finally {
             state.isAiThinking = false;
             DOMElements.aiChatInput.disabled = false;
@@ -442,21 +441,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const addMessageToChat = (sender, text = '') => {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `message message-${sender}`;
+        messageDiv.className = `message message-${sender === 'model' ? 'ai' : sender}`;
         
         if (sender === 'loading') {
             messageDiv.innerHTML = `<div class="message-content"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
         } else {
-             messageDiv.innerHTML = `<div class="message-content"><p>${sender === 'ai' ? '<strong>🤖 AI Poradce</strong><br>' : ''}${text}</p></div>`;
+             messageDiv.innerHTML = `<div class="message-content"><p>${sender === 'model' ? '<strong>🤖 AI Poradce</strong><br>' : ''}${text}</p></div>`;
+             if (sender !== 'loading') {
+                const role = sender === 'user' ? 'user' : 'model';
+                state.aiConversation.push({ role, parts: [{ text }] });
+             }
         }
         
         DOMElements.aiChatMessages.appendChild(messageDiv);
         DOMElements.aiChatMessages.scrollTop = DOMElements.aiChatMessages.scrollHeight;
-
-        // Add to conversation history
-        if (sender !== 'loading') {
-            state.aiConversation.push({ sender, text });
-        }
     };
     
     const removeLoadingMessage = () => {
@@ -517,8 +515,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setupEventListeners = () => {
-        DOMElements.modeBtnCalculator.addEventListener('click', () => { state.mode = 'calculator'; render(); });
-        DOMElements.modeBtnAi.addEventListener('click', () => { state.mode = 'ai'; render(); renderAiSuggestions(['Chci koupit byt', 'Chci refinancovat', 'Jaké jsou sazby?']); });
+        document.getElementById('mode-btn-calculator').addEventListener('click', () => { state.mode = 'calculator'; render(); });
+        document.getElementById('mode-btn-ai').addEventListener('click', () => { state.mode = 'ai'; render(); renderAiSuggestions(['Chci koupit byt', 'Chci refinancovat', 'Jaké jsou sazby?']); });
         
         DOMElements.prevBtn.addEventListener('click', () => navigate(-1));
         DOMElements.nextBtn.addEventListener('click', () => navigate(1));
@@ -546,7 +544,6 @@ document.addEventListener('DOMContentLoaded', () => {
             DOMElements.formSuccessMessage.classList.remove('hidden');
         });
         
-        // AI Chat Listeners
         DOMElements.aiChatSendBtn.addEventListener('click', sendAiChatMessage);
         DOMElements.aiChatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendAiChatMessage(); });
         DOMElements.aiChatSuggestions.addEventListener('click', (e) => {
@@ -555,41 +552,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 sendAiChatMessage();
             }
         });
-
-        // Sidebar and Nav/Footer Listeners
-        const setupActionButtons = () => {
-             const switchAndGoToStep = (step) => {
-                state.mode = 'calculator';
-                state.currentStep = step;
-                render();
-            };
-            DOMElements.navCalculator.addEventListener('click', (e) => { e.preventDefault(); switchAndGoToStep(state.currentStep || 1); });
-            DOMElements.navContact.addEventListener('click', (e) => { e.preventDefault(); switchAndGoToStep(5); });
-            DOMElements.sidebarCalculatorBtn.addEventListener('click', () => switchAndGoToStep(state.currentStep || 1));
-            DOMElements.sidebarContactBtn.addEventListener('click', () => switchAndGoToStep(5));
-            
-            const showModal = (title, content) => {
-                DOMElements.modalTitle.textContent = title;
-                DOMElements.modalBody.innerHTML = content;
-                DOMElements.modal.classList.remove('hidden');
-            };
-            DOMElements.navAbout.addEventListener('click', (e) => { e.preventDefault(); showModal('O nás', modalContent.about);});
-            DOMElements.footerAbout.addEventListener('click', (e) => { e.preventDefault(); showModal('O nás', modalContent.about);});
-            DOMElements.navGdpr.addEventListener('click', (e) => { e.preventDefault(); showModal('Zásady ochrany osobních údajů', modalContent.gdpr);});
-            DOMElements.footerGdpr.addEventListener('click', (e) => { e.preventDefault(); showModal('Zásady ochrany osobních údajů', modalContent.gdpr);});
-            
-            DOMElements.modalClose.addEventListener('click', () => DOMElements.modal.classList.add('hidden'));
-            DOMElements.modal.addEventListener('click', (e) => { if(e.target === DOMElements.modal) DOMElements.modal.classList.add('hidden'); });
+        
+        document.getElementById('nav-calculator').addEventListener('click', (e) => { e.preventDefault(); goToStep(state.currentStep || 1); });
+        DOMElements.navContact.addEventListener('click', (e) => { e.preventDefault(); goToStep(5); });
+        document.querySelector('.sidebar-btn[data-action="switch-to-calculator"]').addEventListener('click', () => goToStep(state.currentStep || 1));
+        DOMElements.sidebarContactBtn.addEventListener('click', () => goToStep(5));
+        
+        const showModal = (title, content) => {
+            DOMElements.modalTitle.textContent = title;
+            DOMElements.modalBody.innerHTML = content;
+            DOMElements.modal.classList.remove('hidden');
         };
-        setupActionButtons();
-    };
-
-    const modalContent = {
-        about: `<p>Jsme tým finančních specialistů a technologických nadšenců, kteří věří, že získání hypotéky může být jednoduchý a transparentní proces. Naše platforma Hypotéka AI kombinuje nejmodernější umělou inteligenci s osobním přístupem zkušených poradců, abychom pro vás našli tu nejlepší nabídku na trhu.</p>`,
-        gdpr: `<p>Vaše soukromí je pro nás na prvním místě. Veškeré údaje, které nám poskytnete, jsou zpracovávány v souladu s nařízením GDPR. Používáme je výhradně za účelem přípravy a zprostředkování nabídky hypotečního úvěru. Vaše data jsou bezpečně uložena a nikdy je neposkytujeme třetím stranám bez vašeho výslovného souhlasu.</p>`
+        const modalContent = {
+            about: `<p>Jsme tým finančních specialistů a technologických nadšenců, kteří věří, že získání hypotéky může být jednoduchý a transparentní proces. Naše platforma Hypotéka AI kombinuje nejmodernější umělou inteligenci s osobním přístupem zkušených poradců, abychom pro vás našli tu nejlepší nabídku na trhu.</p>`,
+            gdpr: `<p>Vaše soukromí je pro nás na prvním místě. Veškeré údaje, které nám poskytnete, jsou zpracovávány v souladu s nařízením GDPR. Používáme je výhradně za účelem přípravy a zprostředkování nabídky hypotečního úvěru. Vaše data jsou bezpečně uložena a nikdy je neposkytujeme třetím stranám bez vašeho výslovného souhlasu.</p>`
+        };
+        document.getElementById('nav-about').addEventListener('click', (e) => { e.preventDefault(); showModal('O nás', modalContent.about);});
+        document.getElementById('footer-about').addEventListener('click', (e) => { e.preventDefault(); showModal('O nás', modalContent.about);});
+        document.getElementById('nav-gdpr').addEventListener('click', (e) => { e.preventDefault(); showModal('Zásady ochrany osobních údajů', modalContent.gdpr);});
+        document.getElementById('footer-gdpr').addEventListener('click', (e) => { e.preventDefault(); showModal('Zásady ochrany osobních údajů', modalContent.gdpr);});
+        
+        DOMElements.modalClose.addEventListener('click', () => DOMElements.modal.classList.add('hidden'));
+        DOMElements.modal.addEventListener('click', (e) => { if(e.target === DOMElements.modal) DOMElements.modal.classList.add('hidden'); });
     };
     
-    // --- INITIALIZATION ---
     const debouncedCalculateLoan = debounce(calculateLoan, 400);
     setupEventListeners();
     render();
