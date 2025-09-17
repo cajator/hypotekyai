@@ -303,7 +303,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send');
     const chatSuggestions = document.getElementById('chat-suggestions');
-    const apiKey = ""; // IMPORTANT: This is a placeholder. For production, use Netlify functions.
     
     function addChatMessage(content, sender, isHtml = false) {
         const bubble = document.createElement('div');
@@ -374,7 +373,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             });
 
-            if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+            if (!response.ok) {
+                 const errorData = await response.json();
+                 throw new Error(errorData.error || `API call failed: ${response.status}`);
+            }
             
             const aiResponse = await response.json();
 
@@ -402,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error("Error processing AI response:", error);
-            thinkingBubble.innerHTML = "Omlouvám se, došlo k technické chybě. Zkuste to prosím znovu.";
+            thinkingBubble.innerHTML = `Omlouvám se, došlo k technické chybě: ${error.message}. Zkuste to prosím znovu.`;
             thinkingBubble.classList.remove('thinking');
         }
     }
@@ -488,8 +490,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initialize();
 });
-</script>
-
-</body>
-</html>
 
