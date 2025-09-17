@@ -77,7 +77,7 @@ function renderParametersForm() {
     let formHtml = '';
     switch (state.intent) {
         case 'vystavba': formHtml = `<div class="form-group"><label for="landValue">Hodnota pozemku</label><input type="text" id="landValue" class="form-group-input" placeholder="2 000 000 Kč" value="${val(state.landValue)}"></div><div class="form-group"><label for="constructionCost">Cena výstavby</label><input type="text" id="constructionCost" class="form-group-input" placeholder="4 000 000 Kč" value="${val(state.constructionCost)}"></div><div class="form-group"><label for="ownResources">Vlastní zdroje</label><input type="text" id="ownResources" class="form-group-input" placeholder="1 500 000 Kč" value="${val(state.ownResources)}"></div>${common}`; break;
-        case 'refinancovani': formHtml = `<div class="form-group"><label for="propertyValue">Nová hodnota nemovitosti</label><input type="text" id="propertyValue" class="form-group-input" placeholder="6 000 000 Kč" value="${val(state.propertyValue)}"></div><div class="form-group"><label for="refinancAmount">Zbývá doplatit</label><input type="text" id="refinancAmount" class="form-group-input" placeholder="3 000 000 Kč" value="${val(state.refinancAmount)}"></div><div class="form-group"><label for="extraLoan">Chci půjčit navíc</label><input type="text" id="extraLoan" class="form-group-input" placeholder="0 Kč" value="${val(state.extraLoan)}"></div>${common}`; break;
+        case 'refinancovani': formHtml = `<div class="form-group"><label for="propertyValue">Nová hodnota nemovitosti</label><input type="text" id="propertyValue" class="form-group-input" placeholder="6 000 000 Kč" value="${val(state.propertyValue)}"></div><div class="form-group"><label for="refinanceAmount">Zbývá doplatit</label><input type="text" id="refinanceAmount" class="form-group-input" placeholder="3 000 000 Kč" value="${val(state.refinanceAmount)}"></div><div class="form-group"><label for="extraLoan">Chci půjčit navíc</label><input type="text" id="extraLoan" class="form-group-input" placeholder="0 Kč" value="${val(state.extraLoan)}"></div>${common}`; break;
         default: formHtml = `<div class="form-group"><label for="propertyValue">Cena nemovitosti</label><input type="text" id="propertyValue" class="form-group-input" placeholder="5 000 000 Kč" value="${val(state.propertyValue)}"></div><div class="form-group"><label for="ownResources">Vlastní zdroje</label><input type="text" id="ownResources" class="form-group-input" placeholder="1 000 000 Kč" value="${val(state.ownResources)}"></div>${common}`; break;
     }
     return formHtml;
@@ -85,17 +85,28 @@ function renderParametersForm() {
 
 function renderCurrentStep() {
     const current = DOMElements.stepContentWrapper.querySelector('.step-content.active');
-    if (current) { current.classList.add('exiting'); current.addEventListener('transitionend', () => current.remove(), { once: true }); }
+    if (current) {
+        current.classList.add('exiting');
+        current.addEventListener('transitionend', () => {
+            current.remove();
+        }, { once: true });
+    }
     DOMElements.stepContentWrapper.insertAdjacentHTML('beforeend', renderStepContent(state.currentStep));
-    setTimeout(() => DOMElements.stepContentWrapper.querySelector('.step-content:last-child').classList.add('active'), 10);
+    setTimeout(() => {
+        const newStep = DOMElements.stepContentWrapper.querySelector('.step-content:last-child');
+        if (newStep) {
+            newStep.classList.add('active');
+        }
+    }, 10);
 }
 
 function updateTimeline() {
     DOMElements.timelineProgressBar.style.width = `${((state.currentStep - 1) / (state.maxSteps - 1)) * 100}%`;
     DOMElements.timelineSteps.forEach((step, i) => {
-        step.classList.toggle('active', (i + 1) === state.currentStep);
-        step.classList.toggle('completed', (i + 1) < state.currentStep);
-        step.querySelector('.step-circle').textContent = (i + 1) < state.currentStep ? '✓' : i + 1;
+        const stepNum = i + 1;
+        step.classList.toggle('active', stepNum === state.currentStep);
+        step.classList.toggle('completed', stepNum < state.currentStep);
+        step.querySelector('.step-circle').textContent = stepNum < state.currentStep ? '✓' : stepNum;
     });
 }
 function updateQuickCalc() { const el = document.getElementById('quick-calc-value'); if (el) el.textContent = formatCurrency(state.monthlyPayment); }
@@ -103,11 +114,20 @@ function updateQuickCalc() { const el = document.getElementById('quick-calc-valu
 function renderAnalysis() {
     const offersContainer = document.getElementById('offers-container');
     const metricsContainer = document.getElementById('metrics-container');
+    if (!offersContainer || !metricsContainer) return;
+
     const baseRate = getInterestRate();
-    const offers = [{ name: 'Nejvýhodnější sazba', rate: baseRate - 0.15, best: true }, { name: 'Optimální varianta', rate: baseRate, best: false }, { name: 'Nabídka s bonusem', rate: baseRate + 0.1, best: false }];
+    const offers = [
+        { name: 'Nejvýhodnější sazba', rate: baseRate - 0.15, best: true },
+        { name: 'Optimální varianta', rate: baseRate, best: false },
+        { name: 'Nabídka s bonusem', rate: baseRate + 0.1, best: false }
+    ];
     offersContainer.innerHTML = offers.map(o => `<div class="offer-card ${o.best ? 'best-offer' : ''}"><h3>${o.name}</h3><div class="rate">${o.rate.toFixed(2)}%</div><div class="label">Měsíční splátka</div><div class="payment">${formatCurrency(calculateMonthlyPayment(state.loanAmount, o.rate, state.loanTerm))}</div></div>`).join('');
-    const totalPaid = state.monthlyPayment * state.loanTerm * 12, totalInterest = totalPaid - state.loanAmount;
+    
+    const totalPaid = state.monthlyPayment * state.loanTerm * 12;
+    const totalInterest = totalPaid - state.loanAmount;
     metricsContainer.innerHTML = `<h3>Klíčové parametry</h3><div class="metric-item"><span>Výše úvěru:</span> <span class="metric-item-value">${formatCurrency(state.loanAmount)}</span></div><div class="metric-item"><span>LTV:</span> <span class="metric-item-value">${state.ltv.toFixed(1)} %</span></div><div class="metric-item"><span>Celkem zaplaceno:</span> <span class="metric-item-value">${formatCurrency(totalPaid)}</span></div><div class="metric-item"><span>Přeplatek na úrocích:</span> <span class="metric-item-value">${formatCurrency(totalInterest)}</span></div>`;
+    
     generateAmortizationChart();
 }
 
@@ -147,10 +167,9 @@ function updateNavigationButtons() { DOMElements.prevBtn.classList.toggle('hidde
 // --- AI CHAT ---
 function initAiChat() {
     DOMElements.aiChatMessages.innerHTML = '';
+    state.aiConversation = []; // Reset conversation history
     const welcomeText = "Dobrý den! Jsem váš osobní hypoteční asistent. Jak vám mohu pomoci s financováním bydlení?";
     addMessageToChat('ai', welcomeText);
-    // KRITICKÁ OPRAVA: Počáteční zpráva se již nepřidává do historie pro AI, pouze se zobrazí.
-    // state.aiConversation.push({ role: 'model', parts: [{ text: welcomeText }] });
     renderAiSuggestions(['Chci koupit byt', 'Potřebuji refinancovat', 'Jaké jsou úrokové sazby?']);
     updateAiSummary();
 }
@@ -222,7 +241,7 @@ function handleModeSwitch(e) {
     DOMElements.aiModeDiv.classList.toggle('hidden', state.mode !== 'ai');
     DOMElements.modeBtnCalculator.classList.toggle('active', state.mode === 'calculator');
     DOMElements.modeBtnAi.classList.toggle('active', state.mode === 'ai');
-    if (state.mode === 'ai' && state.aiConversation.length === 0) initAiChat();
+    if (state.mode === 'ai' && DOMElements.aiChatMessages.innerHTML.trim() === '') initAiChat();
 }
 
 function handleIntentSelection(e) {
@@ -236,7 +255,8 @@ function handleFormInput(e) {
     if (e.target.matches('input[type="text"]')) {
         const key = e.target.id; const value = parseCurrency(e.target.value);
         if (key in state) state[key] = value;
-        e.target.value = value.toLocaleString('cs-CZ');
+        // Keep unformatted value for better UX during typing
+        // e.target.value = value.toLocaleString('cs-CZ'); 
         debouncedCalculateAndUpdate();
     } else if (e.target.matches('select')) {
         state.loanTerm = Number(e.target.value); performCalculations(); updateQuickCalc();
@@ -246,7 +266,8 @@ function handleFormInput(e) {
 function handleFormBlur(e) {
     if (e.target.matches('input[type="text"]')) {
         const key = e.target.id;
-        if (key in state) e.target.value = formatCurrency(state[key]);
+        // Format the value only on blur
+        if (key in state) e.target.value = state[key] > 0 ? state[key].toLocaleString('cs-CZ') + ' Kč' : '';
         else e.target.value = formatCurrency(parseCurrency(e.target.value));
     }
 }
