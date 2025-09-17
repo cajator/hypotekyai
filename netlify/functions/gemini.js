@@ -1,93 +1,92 @@
-// netlify/functions/gemini.js
-// v7.1 - Bug Fixed: Corrected template literal syntax in system prompt.
+/**
+ * Netlify serverless function to handle AI chat requests.
+ * API Endpoint: /api/gemini
+ */
 
-// Helper to call Gemini API
+// Helper to call the Gemini API
 async function callGeminiAPI(apiKey, systemPrompt, conversationHistory) {
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-
     const payload = {
-        contents: conversationHistory, // Pass the whole history
+        contents: conversationHistory,
         systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
             responseMimeType: "application/json",
             temperature: 0.5,
+            topP: 0.95,
         }
     };
-
     const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
-
     if (!response.ok) {
         const errorBody = await response.text();
-        console.error("Gemini API Error:", errorBody);
-        throw new Error(`Gemini API request failed with status ${response.status}`);
+        console.error("Gemini API Error:", response.status, errorBody);
+        throw new Error(`Gemini API request failed`);
     }
-
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-        console.error("Invalid response structure from Gemini API:", JSON.stringify(data, null, 2));
-        throw new Error('Invalid response structure from Gemini API');
+    try {
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('No text part in Gemini response.');
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("Failed to parse Gemini JSON response:", e);
+        return {
+            responseText: "Omlouvám se, došlo k chybě při zpracování odpovědi. Můžete to zkusit formulovat jinak?",
+            suggestions: ["Zkusit znovu", "Přejít na kalkulačku"],
+            updateState: null
+        };
     }
-    return JSON.parse(text);
 }
 
-
 exports.handler = async (event) => {
-    const headers = {
-        'Access-Control-Allow-Origin': '*', // Should be restricted in production
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-    };
-    if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers };
-    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 204,
+            headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
+        };
+    }
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: 'Method Not Allowed' };
+    }
 
     try {
         const { conversation, state } = JSON.parse(event.body);
         const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set.');
 
-        if (!apiKey) {
-            throw new Error('GEMINI_API_KEY is not set in Netlify environment variables.');
-        }
+        const systemPrompt = `
+            Jsi "Hypotéka AI Pro", profesionální, přátelský a vysoce kompetentní hypoteční asistent v České republice. Tvým cílem je vést s uživatelem přirozenou konverzaci a postupně zjistit klíčové informace pro základní odhad hypotéky.
+
+            **DŮSLEDNĚ DODRŽUJ TATO PRAVIDLA:**
+            1.  **Vždy odpovídej POUZE ve formátu JSON** se striktní strukturou: {"responseText": "...", "suggestions": ["...", "..."], "updateState": null | {...}}. Žádný jiný text mimo tento JSON formát.
+            2.  **Analyzuj poslední zprávu uživatele** a kontext konverzace. Zkus z ní vytěžit jednu nebo více informací.
+            3.  **Buď konverzační:** Nepokládej otázky jako robot. Pokud uživatel řekne "Chci si pořídit byt za 5 mega", odpověz přirozeně, např. "Rozumím, byt za 5 000 000 Kč. Skvělá volba! A máte představu, kolik máte vlastních prostředků?"
+            4.  **Extrahuj data do "updateState"**: Z POSLEDNÍ zprávy uživatele extrahuj číselné hodnoty a záměr. Používej klíče: \`intent\`, \`propertyValue\`, \`ownResources\`, \`refinancAmount\`, \`monthlyIncome\`. Buď v extrakci přesný. "5 mega" je 5000000. Pokud si nejsi jistý, vrať null. NIKDY nevracej v 'updateState' hodnoty, které už jsou v 'state' od klienta.
+            5.  **Navrhuj relevantní další kroky v "suggestions"**: Nabídni uživateli snadné odpovědi. Pokud se ptáš na vlastní zdroje, dej návrhy jako "Mám 1 milion Kč", "Mám 20 %", "Zatím nevím".
+            6.  **Drž se českého kontextu**: Používej české termíny a měnu (Kč).
+            7.  **Krátké a jasné odpovědi**: Udržuj "responseText" stručný a k věci.
+            8.  **Zeptej se vždy jen na jednu věc**, aby konverzace plynula.
+        `;
         
-        // Corrected: Using backticks (`) for the template literal
-        const systemPrompt = `Jsi "Hypotéka AI", profesionální a přátelský hypoteční asistent v České republice. Tvým úkolem je vést konverzaci s uživatelem a postupně od něj zjistit 4 klíčové informace: 1. záměr (intent), 2. cenu nemovitosti (propertyValue), 3. vlastní zdroje (ownResources), 4. čistý měsíční příjem (monthlyIncome).
-
-DŮSLEDNĚ DODRŽUJ TATO PRAVIDLA:
-1.  **Vždy odpovídej POUZE ve formátu JSON** podle striktní struktury: {"responseText": "...", "suggestions": ["...", "...", "..."], "updateState": null | {...}, "performCalculation": false | true}. Žádný jiný text.
-2.  **Analyzuj PŘEDCHOZÍ KONVERZACI a AKTUÁLNÍ STAV**, který ti posílá klient. Zjisti, která z 4 informací jako PRVNÍ chybí, a zeptej se POUZE na ni.
-3.  **"responseText"**: Tvá textová odpověď. Musí být krátká, milá a v češtině. Pokud získáš údaj, potvrď ho (např. "Rozumím, počítáme s cenou 5 000 000 Kč.").
-4.  **"suggestions"**: Vždy poskytni 3 krátké, relevantní návrhy v češtině pro další krok.
-5.  **"updateState"**: Z POSLEDNÍ zprávy od uživatele extrahuj data. Např. ze zprávy "chci byt za 5 mega" extrahuj {"propertyValue": 5000000, "intent": "koupe"}. Buď v extrakci konzervativní. Pokud si nejsi jistý, vrať null. NIKDY nevracej údaje, které už znáš z \`state\`.
-6.  **"performCalculation"**: Nastav na 'true' POUZE AŽ budeš mít VŠECHNY 4 informace kompletní a nenulové. Jinak VŽDY 'false'.
-
-Aktuální stav od klienta: ${JSON.stringify(state)}.
-Konverzace probíhá níže. Tvým úkolem je na ni navázat.`;
-
         const result = await callGeminiAPI(apiKey, systemPrompt, conversation);
         
         return {
             statusCode: 200,
-            headers,
+            headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
             body: JSON.stringify(result)
         };
-
     } catch (error) {
-        console.error('Critical Error in serverless function:', error.message);
-        // Provide a structured error response that the frontend can handle
+        console.error('Critical Error in serverless function:', error);
         return {
             statusCode: 500,
-            headers,
+            headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                responseText: "Omlouvám se, nastala technická chyba v komunikaci s AI. Zkuste to prosím za chvíli znovu, nebo použijte naši kalkulačku.",
+                responseText: "Omlouvám se, nastala neočekávaná technická chyba na našem serveru. Zkuste to prosím za chvíli znovu.",
                 suggestions: ["Zkusit znovu", "Přejít na kalkulačku"],
-                updateState: null,
-                performCalculation: false
+                updateState: null
             })
         };
     }
 };
-
