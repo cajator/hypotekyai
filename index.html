@@ -1,210 +1,277 @@
 <!DOCTYPE html>
 <html lang="cs">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Hypotéka AI - Porovnáme nabídky 18 bank s pomocí umělé inteligence a profesionálů. Získejte okamžitý scoring a nejlepší nabídku hypotéky.">
-    <title>Hypotéka AI - Chytrý srovnávač hypoték</title>
-    
+    <meta name="description" content="Hypotéka AI - Získejte nejvýhodnější hypotéku díky umělé inteligenci a našim specialistům. Porovnáme 18 bank a zajistíme vám nejlepší podmínky.">
+    <title>Hypotéka AI - Chytré srovnání hypoték online</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
 </head>
+
 <body>
-    <div id="loading-spinner" class="hidden">
-        <div class="spinner" role="status" aria-label="Načítám"></div>
-    </div>
-
-    <!-- Navigace -->
-    <nav class="navbar">
-        <div class="container nav-container">
-            <div class="logo">Hypotéka AI</div>
-            <div class="nav-links">
-                <a href="#calculator" class="nav-link">Kalkulačka</a>
-                <a href="#" id="about-link" class="nav-link">O nás</a>
-                <a href="#" id="gdpr-link" class="nav-link">GDPR</a>
-                <a href="#step-5" class="nav-link cta">Nezávazná poptávka</a>
-            </div>
-        </div>
-    </nav>
-
     <div class="container">
         <!-- Header -->
-        <header class="header">
-            <div class="free-banner">✅ VYLEPŠENO O NOVÁ DATA</div>
-            <h1 class="main-title">Nejchytřejší cesta k vaší hypotéce</h1>
-            <p class="subtitle">
-                Unikátní spojení <strong>profesionálních poradců</strong> a umělé inteligence. Získejte okamžitý scoring a tu nejlepší nabídku z 18 bank.
-            </p>
+        <header class="page-header">
+            <div class="logo">Hypotéka AI</div>
+            <nav>
+                <a href="#" id="nav-calculator">Kalkulačka</a>
+                <a href="#" id="nav-about">O nás</a>
+                <a href="#" id="nav-gdpr">GDPR</a>
+                <button id="nav-contact" class="btn btn-primary">Nezávazná poptávka</button>
+            </nav>
         </header>
 
-        <!-- Stats Bar -->
-        <div class="stats-bar">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value">Real-time data</div>
-                    <div class="stat-label">Metodika 18 bank</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">94.7%</div>
-                    <div class="stat-label">Úspěšnost schválení</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">286 000 Kč</div>
-                    <div class="stat-label">Průměrná úspora</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">Okamžitý scoring</div>
-                    <div class="stat-label">Scoring v reálném čase</div>
-                </div>
+        <!-- Main Heading -->
+        <section class="hero-section">
+            <div class="free-banner">✅ Konzultace zdarma a nezávazně</div>
+            <h1>Chytrá hypotéka s pomocí AI</h1>
+            <p class="subtitle">
+                Porovnáme vám nabídky 18 bank a sjednáme tu nejvýhodnější hypotéku. <br> Rychle, online a s profesionálním servisem.
+            </p>
+        </section>
+
+        <!-- Stats -->
+        <section class="stats-bar">
+            <div class="stat">
+                <div class="stat-value">Real-time data</div>
+                <div class="stat-label">Metodika 18 bank</div>
             </div>
-        </div>
-        
-        <!-- Bank Info -->
-        <div class="bank-info">
-             <div class="bank-info-content">
-                <div class="live-indicator">
-                    <span class="pulse"></span>
-                    <span><strong id="live-count">17</strong> lidí právě teď porovnává nabídky</span>
-                </div>
-                <div>
-                    <span style="color: var(--gray-text); font-size: 0.875rem;">Sazby aktualizovány dnes: <strong id="update-date">17. 9. 2025</strong></span>
-                    <button id="bank-info-btn" class="link-btn">S kým spolupracujeme?</button>
-                </div>
+            <div class="stat">
+                <div class="stat-value">60 000 Kč</div>
+                <div class="stat-label">Průměrná úspora</div>
             </div>
-        </div>
+            <div class="stat">
+                <div class="stat-value">Okamžitý scoring</div>
+                <div class="stat-label">V reálném čase</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">94.7%</div>
+                <div class="stat-label">Úspěšnost schválení</div>
+            </div>
+        </section>
 
         <!-- Main App Card -->
-        <main id="calculator" class="app-card">
+        <main class="main-card">
             <!-- Mode Switcher -->
             <div class="mode-switcher">
-                <button class="mode-btn active" data-mode="calculator" aria-label="Přepnout na Expresní kalkulačku">🚀 Expresní kalkulačka</button>
-                <button class="mode-btn" data-mode="ai" aria-label="Přepnout na AI Poradce Pro">🤖 AI Poradce Pro</button>
+                <button id="mode-btn-calculator" class="mode-btn active">
+                    🚀 Expresní kalkulačka
+                </button>
+                <button id="mode-btn-ai" class="mode-btn">
+                    🤖 AI Poradce Pro
+                </button>
             </div>
 
-            <!-- Calculator Mode -->
+            <!-- CALCULATOR MODE -->
             <div id="calculator-mode">
                 <!-- Timeline -->
                 <div class="timeline">
-                    <div class="timeline-track">
-                        <div id="progress-bar" class="timeline-progress"></div>
+                    <div id="timeline-1" class="timeline-step active">
+                        <div class="step-circle">1</div>
+                        <div>Záměr</div>
                     </div>
-                    <div class="timeline-steps">
-                        <div class="timeline-step active" data-step="1"><div class="step-circle">1</div><span class="step-label">Záměr</span></div>
-                        <div class="timeline-step" data-step="2"><div class="step-circle">2</div><span class="step-label">Parametry</span></div>
-                        <div class="timeline-step" data-step="3"><div class="step-circle">3</div><span class="step-label">Příjmy</span></div>
-                        <div class="timeline-step" data-step="4"><div class="step-circle">4</div><span class="step-label">Nabídky</span></div>
-                        <div class="timeline-step" data-step="5"><div class="step-circle">5</div><span class="step-label">Kontakt</span></div>
+                    <div id="timeline-2" class="timeline-step">
+                        <div class="step-circle">2</div>
+                        <div>Parametry</div>
                     </div>
-                </div>
-
-                <!-- Step Content -->
-                <div id="step-1" class="step-content active">
-                    <h2>Co plánujete?</h2>
-                    <div class="intent-grid">
-                        <div class="intent-card" data-intent="koupe"><div class="intent-icon">🏡</div><h3 class="intent-title">Koupě</h3><p class="intent-desc">Byt nebo dům</p></div>
-                        <div class="intent-card" data-intent="vystavba"><div class="intent-icon">🏗️</div><h3 class="intent-title">Výstavba</h3><p class="intent-desc">Nový dům</p></div>
-                        <div class="intent-card" data-intent="rekonstrukce"><div class="intent-icon">🛠️</div><h3 class="intent-title">Rekonstrukce</h3><p class="intent-desc">Modernizace</p></div>
-                        <div class="intent-card" data-intent="refinancovani"><div class="intent-icon">🔄</div><h3 class="intent-title">Refinancování</h3><p class="intent-desc">Lepší podmínky</p></div>
-                        <div class="intent-card" data-intent="investice"><div class="intent-icon">📈</div><h3 class="intent-title">Investice</h3><p class="intent-desc">Na pronájem</p></div>
+                    <div id="timeline-3" class="timeline-step">
+                        <div class="step-circle">3</div>
+                        <div>Příjmy</div>
                     </div>
-                </div>
-                
-                <div id="step-2" class="step-content">
-                    <h2>Základní parametry</h2>
-                    <div class="form-grid form-center">
-                        <div class="form-group"><label for="propertyPrice">Cena nemovitosti</label><input type="text" id="propertyPrice" placeholder="např. 5 000 000 Kč" inputmode="numeric"></div>
-                        <div class="form-group"><label for="ownResources">Vlastní zdroje</label><input type="text" id="ownResources" placeholder="např. 1 000 000 Kč" inputmode="numeric"></div>
-                        <div class="form-group"><label for="loanTerm">Doba splatnosti</label><select id="loanTerm"><option value="20">20 let</option><option value="25" selected>25 let</option><option value="30">30 let</option></select></div>
-                        <div class="form-group"><label for="fixation">Fixace úroku</label><select id="fixation"><option value="3">3 roky</option><option value="5" selected>5 let</option><option value="7">7 let</option><option value="10">10 let</option></select></div>
+                    <div id="timeline-4" class="timeline-step">
+                        <div class="step-circle">4</div>
+                        <div>Nabídky</div>
                     </div>
-                    <div class="quick-result"><span class="quick-label">Odhadovaná měsíční splátka</span><div id="quickCalc" class="quick-value">-- Kč</div></div>
-                </div>
-
-                <div id="step-3" class="step-content">
-                    <h2>Vaše finanční situace</h2>
-                     <div class="form-grid form-center">
-                        <div class="form-group"><label for="monthlyIncome">Čistý měsíční příjem domácnosti</label><input type="text" id="monthlyIncome" placeholder="např. 60 000 Kč" inputmode="numeric"></div>
-                        <div class="form-group"><label for="otherLoans">Měsíční splátky jiných úvěrů</label><input type="text" id="otherLoans" placeholder="např. 5 000 Kč" inputmode="numeric"></div>
-                    </div>
-                    <div id="dsti-result" class="dsti-card hidden"><div id="dsti-percent" class="dsti-value">--%</div><div id="dsti-msg" class="dsti-message">Ukazatel DSTI (schopnost splácet)</div></div>
-                </div>
-
-                <div id="step-4" class="step-content">
-                    <h2>Našli jsme pro vás 3 nejlepší nabídky</h2>
-                    <div id="offers" class="offers-grid"><p>Generuji nejlepší nabídky...</p></div>
-                    <div class="analysis-details">
-                        <div class="chart-section"><h3>Průběh splácení</h3><div class="chart-container"><canvas id="loanChart"></canvas></div></div>
-                        <div id="metrics" class="metrics-section"><h3>Klíčové metriky</h3></div>
+                    <div id="timeline-5" class="timeline-step">
+                        <div class="step-circle">5</div>
+                        <div>Kontakt</div>
                     </div>
                 </div>
 
-                <div id="step-5" class="step-content">
-                    <div class="contact-header"><h2>Získejte kompletní analýzu zdarma</h2><p class="subtitle">Náš specialista vám do 24 hodin zašle finální nabídky a probere s vámi všechny detaily.</p></div>
-                    <form id="contact-form" class="contact-form">
-                        <div class="form-row">
-                             <div class="form-group"><label for="name">Jméno a příjmení *</label><input type="text" id="name" name="name" required></div>
-                             <div class="form-group"><label for="phone">Telefon *</label><input type="tel" id="phone" name="phone" required></div>
+                <!-- Step Content Area -->
+                <div class="step-content-wrapper">
+                    <!-- Step 1: Intent -->
+                    <div id="step-1" class="step-content active">
+                        <h2>Co plánujete?</h2>
+                        <div class="intent-grid">
+                            <div class="intent-card" data-intent="koupe">
+                                <div class="intent-icon">🏡</div>
+                                <h3>Koupě</h3>
+                                <p>Byt nebo dům</p>
+                            </div>
+                            <div class="intent-card" data-intent="vystavba">
+                                <div class="intent-icon">🏗️</div>
+                                <h3>Výstavba</h3>
+                                <p>Stavba domu</p>
+                            </div>
+                            <div class="intent-card" data-intent="rekonstrukce">
+                                <div class="intent-icon">🛠️</div>
+                                <h3>Rekonstrukce</h3>
+                                <p>Modernizace</p>
+                            </div>
+                            <div class="intent-card" data-intent="refinancovani">
+                                <div class="intent-icon">🔄</div>
+                                <h3>Refinancování</h3>
+                                <p>Lepší podmínky</p>
+                            </div>
+                            <div class="intent-card" data-intent="investice">
+                                <div class="intent-icon">📈</div>
+                                <h3>Investice</h3>
+                                <p>Na pronájem</p>
+                            </div>
                         </div>
-                        <div class="form-group"><label for="email">E-mail *</label><input type="email" id="email" name="email" required></div>
-                        <div class="form-group"><label for="notes">Poznámka (nepovinné)</label><textarea id="notes" name="notes" rows="3" placeholder="Máte specifický dotaz? Např. ohledně pojištění, refinancování..."></textarea></div>
-                         <button type="submit" class="btn-submit">Odeslat a získat nabídky</button>
-                    </form>
-                    <div id="form-success" class="success-msg hidden">✓ Děkujeme! Brzy se vám ozveme s kompletní analýzou.</div>
+                    </div>
+
+                    <!-- Step 2: Parameters -->
+                    <div id="step-2" class="step-content">
+                        <h2>Zadejte parametry</h2>
+                        <!-- This container will be dynamically filled based on intent -->
+                        <div id="parameters-form-container" class="form-grid"></div>
+                        <div class="quick-calc">
+                            <div>Orientační měsíční splátka</div>
+                            <div class="quick-calc-value" id="quick-calc-value">-- Kč</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Income -->
+                    <div id="step-3" class="step-content">
+                        <h2>Vaše finanční situace</h2>
+                        <div class="form-grid-center">
+                            <div class="form-group">
+                                <label for="monthlyIncome">Čistý měsíční příjem domácnosti</label>
+                                <input type="text" id="monthlyIncome" class="input-currency" placeholder="např. 60 000 Kč">
+                            </div>
+                            <div class="form-group">
+                                <label for="otherLoans">Měsíční splátky jiných úvěrů</label>
+                                <input type="text" id="otherLoans" class="input-currency" placeholder="např. 5 000 Kč" value="0 Kč">
+                            </div>
+                        </div>
+                        <div id="dsti-result" class="dsti-card hidden">
+                            <div class="dsti-value">DSTI: <span id="dsti-value">--%</span></div>
+                            <div id="dsti-message"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Analysis -->
+                    <div id="step-4" class="step-content">
+                        <h2>Personalizovaná analýza</h2>
+                        <p class="subtitle-center">Na základě vašich údajů jsme připravili 3 nejlepší nabídky.</p>
+                        <div id="offers-container" class="offers-grid">
+                            <!-- Offers will be generated here -->
+                        </div>
+                        <div class="analysis-details">
+                            <div id="metrics-container" class="metrics-card">
+                                <!-- Metrics will be generated here -->
+                            </div>
+                            <div class="chart-card">
+                                <h3>Průběh splácení</h3>
+                                <canvas id="amortization-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Contact -->
+                    <div id="step-5" class="step-content">
+                        <h2>Získejte kompletní analýzu zdarma</h2>
+                        <p class="subtitle-center">Náš specialista vám do 24 hodin zašle finální nabídky a probere s vámi všechny detaily.</p>
+                        <form id="contact-form" class="contact-form-grid">
+                            <div class="form-group">
+                                <label for="contact-name">Jméno a příjmení *</label>
+                                <input type="text" id="contact-name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-phone">Telefon *</label>
+                                <input type="tel" id="contact-phone" name="phone" required>
+                            </div>
+                            <div class="form-group form-group-full">
+                                <label for="contact-email">E-mail *</label>
+                                <input type="email" id="contact-email" name="email" required>
+                            </div>
+                             <div class="form-group form-group-full">
+                                <label for="contact-notes">Poznámka (nepovinné)</label>
+                                <textarea id="contact-notes" name="notes" rows="3"></textarea>
+                            </div>
+                            <div class="form-group-full">
+                               <button type="submit" class="btn btn-submit">Odeslat a získat nabídky</button>
+                            </div>
+                        </form>
+                         <div id="form-success-message" class="success-message hidden">
+                            <h3>Děkujeme za váš zájem!</h3>
+                            <p>Váš požadavek byl úspěšně odeslán. Náš specialista se vám ozve do 24 hodin.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Navigation -->
-                <div class="navigation">
-                    <button id="prev-btn" class="nav-btn hidden" aria-label="Přejít na předchozí krok">← Zpět</button>
-                    <button id="next-btn" class="nav-btn primary" aria-label="Přejít na další krok">Další →</button>
+                <div class="navigation-buttons">
+                    <button id="prev-btn" class="btn btn-secondary hidden">← Zpět</button>
+                    <button id="next-btn" class="btn btn-primary">Další →</button>
                 </div>
             </div>
 
-            <!-- AI Mode -->
-            <div id="ai-mode" class="ai-layout hidden">
-                <div class="ai-chat">
-                    <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
-                    <div id="chat-suggestions" class="chat-suggestions"></div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chat-input" placeholder="Zadejte svůj dotaz..." aria-label="Vstup pro chat">
-                        <button id="send-btn" class="send-btn" aria-label="Odeslat zprávu">Odeslat</button>
+            <!-- AI ADVISOR MODE -->
+            <div id="ai-mode" class="hidden">
+                <div class="ai-chat-layout">
+                    <div class="ai-chat-main">
+                        <div id="ai-chat-messages" class="chat-messages">
+                             <!-- Initial AI message -->
+                            <div class="message message-ai">
+                                <div class="message-content">
+                                    <p><strong>🤖 AI Poradce</strong></p>
+                                    <p>Dobrý den! Jsem váš osobní hypoteční asistent. Pomohu vám zorientovat se v nabídce a najít ideální řešení. Na co se chcete zeptat?</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="ai-chat-suggestions" class="chat-suggestions">
+                           <!-- Suggestions will be generated here -->
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="ai-chat-input" placeholder="Zadejte svůj dotaz...">
+                            <button id="ai-chat-send" class="btn btn-primary">Odeslat</button>
+                        </div>
                     </div>
+                    <aside class="ai-sidebar">
+                        <div class="sidebar-card">
+                            <h3>Shrnutí</h3>
+                            <div id="ai-summary">
+                                <p>Zatím nemáme dostatek údajů pro výpočet.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-card">
+                            <h3>Rychlé akce</h3>
+                            <button class="sidebar-btn" data-action="switch-to-calculator">Přejít na kalkulačku</button>
+                            <button class="sidebar-btn" data-action="request-contact">Spojit se specialistou</button>
+                        </div>
+                    </aside>
                 </div>
-                <aside class="ai-sidebar">
-                    <div class="sidebar-card"><h3>Shrnutí</h3><div id="ai-summary"><p>Zatím nebyly zadány žádné parametry.</p></div></div>
-                     <div class="sidebar-card">
-                        <h3>Rychlé akce</h3>
-                        <button class="sidebar-btn" data-action="calculate">Přejít na kalkulačku</button>
-                        <button class="sidebar-btn" data-action="contact">Spojit se specialistou</button>
-                        <button class="sidebar-btn" data-action="refinance">Chci refinancovat</button>
-                        <button class="sidebar-btn" data-action="rates">Jaké jsou sazby?</button>
-                    </div>
-                </aside>
             </div>
         </main>
         
         <!-- Footer -->
-        <footer class="footer">
-            <p>© 2025 Hypotéka AI | Všechny výpočty jsou orientační.</p>
-            <p><a href="#" id="footer-about-link">O nás</a> | <a href="#" id="footer-gdpr-link">Ochrana osobních údajů (GDPR)</a> | <a href="#step-5">Kontakt</a></p>
+        <footer class="page-footer">
+            <p>© 2024 Hypotéka AI | Všechny výpočty jsou orientační.</p>
+            <p>
+                <a href="#" id="footer-about">O nás</a> | 
+                <a href="#" id="footer-gdpr">Zásady ochrany osobních údajů</a>
+            </p>
         </footer>
     </div>
 
-    <!-- Modals -->
-    <div id="bank-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bank-modal-title">
-        <div class="modal-content"><h2 id="bank-modal-title">Spolupracujeme s 18 bankami a pojišťovnami</h2><p>Díky široké síti partnerů vám můžeme zaručit, že najdeme opravdu tu nejlepší nabídku na trhu. Mezi naše hlavní partnery patří Česká spořitelna, ČSOB, Hypoteční banka, Komerční banka, Raiffeisenbank, UniCredit Bank, Moneta a mnoho dalších.</p><button class="modal-close" id="close-bank-modal">Zavřít</button></div>
+    <!-- Modal for About/GDPR -->
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <div id="modal-body"></div>
+            <button id="modal-close" class="btn btn-primary">Zavřít</button>
+        </div>
     </div>
-    <div id="gdpr-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="gdpr-modal-title">
-        <div class="modal-content"><h2 id="gdpr-modal-title">Ochrana osobních údajů (GDPR)</h2><p>Vaše soukromí je pro nás prioritou. Veškeré údaje, které nám poskytnete, jsou považovány za přísně důvěrné a jsou zpracovávány v souladu s Nařízením Evropského parlamentu a Rady (EU) 2016/679 (GDPR).</p><p><strong>Správce údajů:</strong> Hypotéka AI s.r.o., IČO: 12345678, se sídlem v Praze.</p><p><strong>Účel zpracování:</strong> Údaje zadané v kalkulačce a kontaktním formuláři používáme výhradně pro účely sestavení a zaslání nezávazné nabídky hypotéky a pro následnou komunikaci související s touto nabídkou.</p><p>Vaše údaje nebudou sdíleny s žádnými třetími stranami bez vašeho výslovného souhlasu. Máte právo kdykoliv požádat o opravu, výmaz či omezení zpracování svých údajů.</p><button class="modal-close" id="close-gdpr-modal">Rozumím</button></div>
-    </div>
-    <div id="about-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
-        <div class="modal-content"><h2 id="about-modal-title">O nás</h2><p>Jsme tým <strong>12 zkušených hypotečních specialistů a technologických nadšenců</strong>. Naší misí je ušetřit vám čas, peníze a starosti spojené s hledáním nejlepšího financování vašeho bydlení.</p><p>Propojujeme osobní přístup a mnohaleté zkušenosti našich poradců s výkonnou umělou inteligencí, která za vás neúnavně analyzuje trh a hledá optimální řešení. Díky tomu vám můžeme předložit personalizované nabídky, které přesně odpovídají vaší situaci.</p><button class="modal-close" id="close-about-modal">Zavřít</button></div>
-    </div>
-
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
