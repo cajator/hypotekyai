@@ -1,0 +1,40 @@
+{
+  "name": "hypoteka-ai",
+  "version": "1.0.0",
+  "description": "AI-powered mortgage calculator for Czech market",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx live-server --port=3000",
+    "serve": "python3 -m http.server 3000 || python -m SimpleHTTPServer 3000",
+    "deploy": "netlify deploy --prod",
+    "deploy:preview": "netlify deploy",
+    "test": "echo 'No tests configured'",
+    "format": "prettier --write index.html",
+    "validate": "html-validate index.html"
+  },
+  "keywords": [
+    "mortgage",
+    "calculator",
+    "AI",
+    "Czech",
+    "hypotéka"
+  ],
+  "author": "Hypotéka AI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "prettier": "^3.0.0",
+    "html-validate": "^8.0.0"
+  },
+  "optionalDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/hypoteka-ai.git"
+  },
+  "homepage": "https://hypoteka-ai.netlify.app",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

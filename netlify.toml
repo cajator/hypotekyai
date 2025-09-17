@@ -1,52 +1,57 @@
+# Netlify Configuration
+# netlify.toml
+
 [build]
-  # Build settings
+  # Není potřeba build command, máme statický HTML
   publish = "."
-  functions = "netlify/functions"
 
-[build.environment]
-  # Environment variables for build
-  NODE_VERSION = "18"
-
+# Headers pro bezpečnost a výkon
 [[headers]]
-  # Apply these headers to all routes
   for = "/*"
   [headers.values]
-    # Security headers
+    # Bezpečnostní hlavičky
     X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     
-    # CORS headers for API calls
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    # Cache control
+    Cache-Control = "public, max-age=3600"
 
-# Redirect rules for SPA behavior
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    # HTML se nemá cachovat
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Redirecty (pokud potřebujete)
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+  from = "/home"
+  to = "/"
+  status = 301
 
-# Form handling
 [[redirects]]
-  from = "/"
-  to = "/index.html"
-  status = 200
-  conditions = {Role = ["admin"]}
+  from = "/kalkulacka"
+  to = "/#calculator"
+  status = 301
 
-# Error pages
+# 404 stránka
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
+  status = 404
 
-# Functions configuration
+# Funkce (pokud budete chtít přidat)
 [functions]
-  # Directory for serverless functions
-  directory = "netlify/functions/"
-  
-  # Individual function settings
-  [functions.gemini]
-    # Timeout for AI function (max 10 seconds for Netlify)
-    timeout = 10
+  directory = "functions"
+
+# Formuláře
+[build.processing]
+  skip_processing = false
+
+[build.processing.html]
+  pretty_urls = true
+
+# Environment variables příklad
+# V Netlify UI nastavte:
+# GOOGLE_ANALYTICS_ID = "G-XXXXXXXXXX"
