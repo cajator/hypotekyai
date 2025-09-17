@@ -1,790 +1,543 @@
-// Hypotéka AI - Finální verze 4.0
-// Kompletní JavaScript s všemi opravami
+// Hypotéka AI - JavaScript v5.0
+// Kompletní funkční verze
 
-// Wait for DOM to be fully loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    // DOM is already loaded
-    initializeApp();
-}
-
-function initializeApp() {
-    console.log('Hypotéka AI - Initializing...');
+(function() {
+    'use strict';
     
-    // =============================
-    // KONFIGURACE
-    // =============================
-    
-    const BANKS = {
-        major: [
-            'ČSOB', 'Komerční banka', 'Česká spořitelna', 
-            'Raiffeisen Bank', 'UniCredit Bank', 'Hypoteční banka'
-        ],
-        online: [
-            'Air Bank', 'Moneta Money Bank', 'mBank', 'Creditas'
-        ],
-        building: [
-            'ČMSS Liška', 'Modrá pyramida', 'Stavební spořitelna ČS', 'Raiffeisen stavební spořitelna'
-        ],
-        other: [
-            'Oberbank', 'Cofidis', 'TGI Money'
-        ]
-    };
-    
-    const getAllBanks = () => [
-        ...BANKS.major,
-        ...BANKS.online,
-        ...BANKS.building,
-        ...BANKS.other
-    ];
-    
-    const RATE_DATABASE = {
-        "3": { 80: { best: 4.19, likely: 4.39, worst: 4.69 }, 90: { best: 4.69, likely: 4.89, worst: 5.19 } },
-        "5": { 80: { best: 3.99, likely: 4.29, worst: 4.59 }, 90: { best: 4.49, likely: 4.79, worst: 5.09 } },
-        "7": { 80: { best: 4.09, likely: 4.39, worst: 4.69 }, 90: { best: 4.59, likely: 4.89, worst: 5.19 } },
-        "10": { 80: { best: 4.19, likely: 4.49, worst: 4.79 }, 90: { best: 4.69, likely: 4.99, worst: 5.29 } }
-    };
-    
-    // =============================
-    // STATE
-    // =============================
-    
+    // State
     let currentStep = 1;
     let currentMode = 'calculator';
+    let selectedIntent = '';
     
-    const state = {
-        intent: '',
-        propertyValue: 0,
+    const data = {
+        propertyPrice: 0,
         ownResources: 0,
         loanTerm: 25,
         fixation: 5,
         monthlyIncome: 0,
-        monthlyLiabilities: 0,
-        city: ''
+        otherLoans: 0,
+        loanAmount: 0,
+        ltv: 0,
+        monthlyPayment: 0
     };
     
-    const aiState = {
-        messages: [],
-        context: {},
-        calculating: false
+    // Rate database (anonymizované)
+    const rates = {
+        3: { 80: 4.19, 90: 4.69 },
+        5: { 80: 3.99, 90: 4.49 },
+        7: { 80: 4.09, 90: 4.59 },
+        10: { 80: 4.19, 90: 4.69 }
     };
     
-    // =============================
-    // DOM ELEMENTS
-    // =============================
+    // Initialize
+    document.addEventListener('DOMContentLoaded', init);
     
-    const elements = {
-        // Mode
-        modeBtns: document.querySelectorAll('.mode-btn'),
-        calculatorMode: document.getElementById('calculator-mode'),
-        aiMode: document.getElementById('ai-mode'),
+    function init() {
+        console.log('Hypotéka AI v5.0 - Initializing');
+        
+        setupEventListeners();
+        updateLiveCounter();
+        setInterval(updateLiveCounter, 5000);
+        updateDateDisplay();
+    }
+    
+    // Event Listeners
+    function setupEventListeners() {
+        // Mode switcher
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+        });
+        
+        // Intent cards
+        document.querySelectorAll('.intent-card').forEach(card => {
+            card.addEventListener('click', () => selectIntentCard(card));
+        });
         
         // Navigation
-        prevBtn: document.getElementById('prev-btn'),
-        nextBtn: document.getElementById('next-btn'),
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
         
-        // Timeline
-        timelineSteps: document.querySelectorAll('.timeline-step'),
-        timelineProgress: document.getElementById('timeline-progress'),
+        if (prevBtn) prevBtn.addEventListener('click', () => navigate(-1));
+        if (nextBtn) nextBtn.addEventListener('click', () => navigate(1));
         
-        // Form sections
-        formSections: document.querySelectorAll('.form-section'),
+        // Form inputs
+        const inputs = ['propertyPrice', 'ownResources', 'monthlyIncome', 'otherLoans'];
+        inputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', () => handleInputChange(id, input.value));
+            }
+        });
         
-        // Inputs
-        propertyValue: document.getElementById('propertyValue'),
-        ownResources: document.getElementById('ownResources'),
-        loanTerm: document.getElementById('loanTerm'),
-        fixation: document.getElementById('fixation'),
-        monthlyIncome: document.getElementById('monthlyIncome'),
-        monthlyLiabilities: document.getElementById('monthlyLiabilities'),
+        // Selects
+        const selects = ['loanTerm', 'fixation'];
+        selects.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+                select.addEventListener('change', () => handleSelectChange(id, select.value));
+            }
+        });
         
-        // Displays
-        monthlyPayment: document.getElementById('monthly-payment'),
-        dstiResult: document.getElementById('dsti-result'),
-        dstiValue: document.getElementById('dsti-value'),
-        dstiMessage: document.getElementById('dsti-message'),
+        // Contact form
+        const form = document.getElementById('contact-form');
+        if (form) {
+            form.addEventListener('submit', handleFormSubmit);
+        }
         
-        // Chat
-        chatWindow: document.getElementById('chat-window'),
-        chatInput: document.getElementById('chat-input'),
-        chatSend: document.getElementById('chat-send'),
-        chatSuggestions: document.getElementById('chat-suggestions'),
+        // Bank info button
+        const bankBtn = document.getElementById('bank-info-btn');
+        if (bankBtn) {
+            bankBtn.addEventListener('click', showBankModal);
+        }
         
-        // Form
-        leadForm: document.getElementById('lead-form'),
-        formSuccess: document.getElementById('form-success'),
+        // AI Chat
+        const sendBtn = document.getElementById('send-btn');
+        const chatInput = document.getElementById('chat-input');
         
-        // Other
-        liveCount: document.getElementById('live-count'),
-        showBanksBtn: document.getElementById('show-all-banks'),
-        banksModal: document.getElementById('banks-modal'),
-        lastUpdated: document.getElementById('last-updated')
-    };
+        if (sendBtn) sendBtn.addEventListener('click', sendChatMessage);
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+        }
+        
+        // Chat suggestions
+        document.querySelectorAll('.suggestion').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (chatInput) chatInput.value = btn.textContent;
+                sendChatMessage();
+            });
+        });
+        
+        // Sidebar buttons
+        document.querySelectorAll('.sidebar-btn').forEach(btn => {
+            btn.addEventListener('click', () => handleSidebarAction(btn.textContent));
+        });
+    }
     
-    // =============================
-    // MODE SWITCHING
-    // =============================
-    
+    // Mode Switching
     function switchMode(mode) {
         currentMode = mode;
         
-        elements.modeBtns.forEach(btn => {
+        document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.mode === mode);
         });
         
-        if (mode === 'calculator') {
-            elements.calculatorMode.classList.remove('hidden');
-            elements.aiMode.classList.add('hidden');
-        } else {
-            elements.calculatorMode.classList.add('hidden');
-            elements.aiMode.classList.remove('hidden');
-            // Prevent auto-scroll on mode switch
-            setTimeout(() => {
-                elements.chatWindow.scrollTop = elements.chatWindow.scrollHeight;
-            }, 100);
-        }
+        document.getElementById('calculator-mode').classList.toggle('hidden', mode !== 'calculator');
+        document.getElementById('ai-mode').classList.toggle('hidden', mode !== 'ai');
     }
     
-    // =============================
-    // NAVIGATION
-    // =============================
-    
-    function updateStep(step) {
-        currentStep = step;
+    // Intent Selection
+    function selectIntentCard(card) {
+        selectedIntent = card.dataset.intent;
         
-        // Update timeline
-        elements.timelineSteps.forEach((el, index) => {
-            const stepNum = index + 1;
-            el.classList.toggle('active', stepNum === step);
-            el.classList.toggle('completed', stepNum < step);
-            
-            const circle = el.querySelector('.step-circle');
-            if (circle) {
-                if (stepNum < step) {
-                    circle.textContent = '✓';
-                } else {
-                    circle.textContent = stepNum;
-                }
-            }
+        document.querySelectorAll('.intent-card').forEach(c => {
+            c.classList.toggle('selected', c === card);
         });
         
-        // Update progress bar
-        const progress = ((step - 1) / 4) * 100;
-        elements.timelineProgress.style.width = `${progress}%`;
-        
-        // Show/hide sections
-        elements.formSections.forEach(section => {
-            const sectionStep = parseInt(section.id.split('-')[1]);
-            section.classList.toggle('hidden', sectionStep !== step);
-        });
-        
-        // Update navigation buttons
-        elements.prevBtn.classList.toggle('hidden', step === 1);
-        
-        if (step === 5) {
-            elements.nextBtn.textContent = 'Začít znovu';
-            elements.nextBtn.className = 'btn btn-secondary';
-        } else if (step === 4) {
-            elements.nextBtn.textContent = 'Získat konzultaci';
-            elements.nextBtn.className = 'btn btn-success';
-        } else {
-            elements.nextBtn.textContent = 'Další →';
-            elements.nextBtn.className = 'btn btn-primary';
-        }
-        
-        // Generate analysis on step 4
-        if (step === 4) {
-            generateAnalysis();
-        }
+        // Auto advance after selection
+        setTimeout(() => navigate(1), 300);
     }
     
+    // Navigation
     function navigate(direction) {
-        if (elements.nextBtn.textContent === 'Začít znovu') {
-            resetForm();
+        const newStep = currentStep + direction;
+        
+        if (newStep < 1 || newStep > 5) return;
+        
+        // Validation
+        if (direction > 0 && !validateStep(currentStep)) {
+            showMessage('Vyplňte prosím všechny údaje');
             return;
         }
         
-        const newStep = currentStep + direction;
-        if (newStep >= 1 && newStep <= 5) {
-            // Validate before moving forward
-            if (direction > 0 && !validateStep(currentStep)) {
-                showToast('Vyplňte prosím všechny povinné údaje', 'warning');
-                return;
-            }
-            updateStep(newStep);
+        currentStep = newStep;
+        updateStepDisplay();
+        
+        // Generate analysis on step 4
+        if (currentStep === 4) {
+            generateAnalysis();
         }
     }
     
     function validateStep(step) {
         switch(step) {
-            case 1: return state.intent !== '';
-            case 2: return state.propertyValue > 0 && state.ownResources > 0;
-            case 3: return state.monthlyIncome > 0;
-            default: return true;
+            case 1:
+                return selectedIntent !== '';
+            case 2:
+                return data.propertyPrice > 0 && data.ownResources > 0;
+            case 3:
+                return data.monthlyIncome > 0;
+            default:
+                return true;
         }
     }
     
-    function resetForm() {
-        state.intent = '';
-        state.propertyValue = 0;
-        state.ownResources = 0;
-        state.monthlyIncome = 0;
-        state.monthlyLiabilities = 0;
+    function updateStepDisplay() {
+        // Update timeline
+        const progress = ((currentStep - 1) / 4) * 100;
+        document.getElementById('progress-bar').style.width = progress + '%';
         
-        document.querySelectorAll('.intent-btn').forEach(btn => {
-            btn.style.borderColor = '#e5e7eb';
-            btn.style.background = 'white';
-        });
-        
-        document.querySelectorAll('input').forEach(input => {
-            if (input.type !== 'submit') {
-                input.value = '';
+        // Update step states
+        document.querySelectorAll('.timeline-step').forEach((step, i) => {
+            const stepNum = i + 1;
+            step.classList.toggle('active', stepNum === currentStep);
+            step.classList.toggle('completed', stepNum < currentStep);
+            
+            const circle = step.querySelector('.step-circle');
+            if (circle && stepNum < currentStep) {
+                circle.textContent = '✓';
+            } else if (circle) {
+                circle.textContent = stepNum;
             }
         });
         
-        updateStep(1);
-    }
-    
-    // =============================
-    // INTENT SELECTION
-    // =============================
-    
-    function selectIntent(intent) {
-        state.intent = intent;
-        
-        document.querySelectorAll('.intent-btn').forEach(btn => {
-            if (btn.dataset.intent === intent) {
-                btn.style.borderColor = '#0066ff';
-                btn.style.background = '#f0f7ff';
-            } else {
-                btn.style.borderColor = '#e5e7eb';
-                btn.style.background = 'white';
-            }
+        // Show/hide content
+        document.querySelectorAll('.step-content').forEach((content, i) => {
+            content.classList.toggle('active', i + 1 === currentStep);
         });
+        
+        // Update navigation
+        document.getElementById('prev-btn').classList.toggle('hidden', currentStep === 1);
+        
+        const nextBtn = document.getElementById('next-btn');
+        if (currentStep === 5) {
+            nextBtn.textContent = 'Začít znovu';
+            nextBtn.classList.remove('primary');
+        } else if (currentStep === 4) {
+            nextBtn.textContent = 'Získat konzultaci';
+            nextBtn.classList.add('primary');
+        } else {
+            nextBtn.textContent = 'Další →';
+            nextBtn.classList.add('primary');
+        }
     }
     
-    // =============================
-    // CALCULATIONS
-    // =============================
+    // Input Handling
+    function handleInputChange(field, value) {
+        const numValue = parseAmount(value);
+        data[field] = numValue;
+        
+        if (field === 'propertyPrice' || field === 'ownResources') {
+            calculateLoan();
+        }
+        
+        if (field === 'monthlyIncome' || field === 'otherLoans') {
+            calculateDSTI();
+        }
+    }
     
-    function parseNumber(value) {
-        if (typeof value === 'number') return value;
+    function handleSelectChange(field, value) {
+        data[field] = parseInt(value);
+        calculateLoan();
+    }
+    
+    function parseAmount(value) {
         if (!value) return 0;
-        
-        const str = value.toString().toLowerCase().replace(/\s/g, '');
-        let num = parseFloat(str.replace(/[^\d.]/g, ''));
-        
-        if (str.includes('m')) num *= 1000000;
-        else if (str.includes('k')) num *= 1000;
-        
-        return isNaN(num) ? 0 : num;
+        const str = value.toString().replace(/\s/g, '').replace(/,/g, '.');
+        return parseFloat(str) || 0;
     }
     
-    function formatCurrency(value) {
-        return new Intl.NumberFormat('cs-CZ', {
-            style: 'currency',
-            currency: 'CZK',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(value);
+    // Calculations
+    function calculateLoan() {
+        if (data.propertyPrice === 0) {
+            document.getElementById('quickCalc').textContent = '-- Kč';
+            return;
+        }
+        
+        data.loanAmount = Math.max(0, data.propertyPrice - data.ownResources);
+        data.ltv = (data.loanAmount / data.propertyPrice) * 100;
+        
+        const rate = getInterestRate();
+        data.monthlyPayment = calculateMonthlyPayment(data.loanAmount, rate, data.loanTerm);
+        
+        document.getElementById('quickCalc').textContent = formatCurrency(data.monthlyPayment);
+    }
+    
+    function getInterestRate() {
+        const fixRates = rates[data.fixation] || rates[5];
+        const ltvKey = data.ltv > 80 ? 90 : 80;
+        return fixRates[ltvKey] || 4.5;
     }
     
     function calculateMonthlyPayment(principal, annualRate, years) {
-        if (principal <= 0 || annualRate <= 0 || years <= 0) return 0;
+        if (principal <= 0) return 0;
         
-        const monthlyRate = (annualRate / 100) / 12;
+        const monthlyRate = annualRate / 100 / 12;
         const n = years * 12;
         
         return principal * (monthlyRate * Math.pow(1 + monthlyRate, n)) / 
                (Math.pow(1 + monthlyRate, n) - 1);
     }
     
-    function getRates(ltv, fixation) {
-        const fixRates = RATE_DATABASE[fixation] || RATE_DATABASE["5"];
-        const ltvRates = ltv > 80 ? fixRates[90] : fixRates[80];
-        return ltvRates || { best: 4.5, likely: 4.7, worst: 5.0 };
-    }
-    
-    function updateCalculations() {
-        // Get values
-        state.propertyValue = parseNumber(elements.propertyValue?.value);
-        state.ownResources = parseNumber(elements.ownResources?.value);
-        state.loanTerm = parseInt(elements.loanTerm?.value) || 25;
-        state.fixation = parseInt(elements.fixation?.value) || 5;
-        state.monthlyIncome = parseNumber(elements.monthlyIncome?.value);
-        state.monthlyLiabilities = parseNumber(elements.monthlyLiabilities?.value);
+    function calculateDSTI() {
+        if (data.monthlyIncome === 0) return;
         
-        // Skip if no data
-        if (state.propertyValue === 0 || state.ownResources === 0) {
-            if (elements.monthlyPayment) {
-                elements.monthlyPayment.textContent = '-- Kč';
-            }
-            return;
-        }
+        const totalPayments = data.monthlyPayment + data.otherLoans;
+        const dsti = (totalPayments / data.monthlyIncome) * 100;
         
-        // Calculate
-        const loanAmount = state.propertyValue - state.ownResources;
-        if (loanAmount <= 0) {
-            if (elements.monthlyPayment) {
-                elements.monthlyPayment.textContent = '-- Kč';
-            }
-            return;
-        }
+        const dstiCard = document.getElementById('dsti-result');
+        const dstiPercent = document.getElementById('dsti-percent');
+        const dstiMsg = document.getElementById('dsti-msg');
         
-        const ltv = (loanAmount / state.propertyValue) * 100;
-        const rates = getRates(ltv, state.fixation);
-        const monthlyPayment = calculateMonthlyPayment(loanAmount, rates.likely, state.loanTerm);
-        
-        // Update display
-        if (elements.monthlyPayment) {
-            elements.monthlyPayment.textContent = formatCurrency(monthlyPayment);
-        }
-        
-        // Update DSTI if income is provided
-        if (state.monthlyIncome > 0 && elements.dstiResult) {
-            const dsti = ((monthlyPayment + state.monthlyLiabilities) / state.monthlyIncome) * 100;
-            
-            elements.dstiResult.classList.remove('hidden');
-            elements.dstiValue.textContent = `${dsti.toFixed(1)}%`;
+        if (dstiCard && dstiPercent && dstiMsg) {
+            dstiCard.classList.remove('hidden');
+            dstiPercent.textContent = dsti.toFixed(1) + '%';
             
             if (dsti < 40) {
-                elements.dstiMessage.textContent = '✅ Výborné! Hypotéku dostanete.';
-                elements.dstiResult.style.borderColor = '#00b341';
-                elements.dstiResult.style.background = '#f0fdf4';
+                dstiMsg.textContent = '✅ Výborné! Hypotéku získáte.';
+                dstiCard.style.borderColor = '#00b341';
             } else if (dsti < 50) {
-                elements.dstiMessage.textContent = '⚠️ Na hranici, ale zvládnutelné.';
-                elements.dstiResult.style.borderColor = '#fbbf24';
-                elements.dstiResult.style.background = '#fef3c7';
+                dstiMsg.textContent = '⚠️ Na hranici, ale dostupné.';
+                dstiCard.style.borderColor = '#fbbf24';
             } else {
-                elements.dstiMessage.textContent = '❌ Příliš vysoké, kontaktujte poradce.';
-                elements.dstiResult.style.borderColor = '#ef4444';
-                elements.dstiResult.style.background = '#fee2e2';
+                dstiMsg.textContent = '❌ Příliš vysoké, kontaktujte poradce.';
+                dstiCard.style.borderColor = '#ef4444';
             }
         }
     }
     
-    // =============================
-    // ANALYSIS
-    // =============================
-    
+    // Analysis
     function generateAnalysis() {
-        const loanAmount = state.propertyValue - state.ownResources;
-        if (loanAmount <= 0) return;
+        const offersDiv = document.getElementById('offers');
+        const metricsDiv = document.getElementById('metrics');
         
-        const ltv = (loanAmount / state.propertyValue) * 100;
-        const rates = getRates(ltv, state.fixation);
+        if (!offersDiv || !metricsDiv) return;
         
-        // Generate bank offers
-        const bankOffers = [
-            { bank: 'ČMSS Liška', rate: rates.best - 0.2, color: '#ff6b00' },
-            { bank: 'Hypoteční banka', rate: rates.best, color: '#009ee0' },
-            { bank: 'ČSOB', rate: rates.likely, color: '#0066cc' }
+        // Generate offers
+        const baseRate = getInterestRate();
+        const offers = [
+            { name: 'Nejlepší nabídka', rate: baseRate - 0.2, badge: 'NEJLEPŠÍ' },
+            { name: 'Doporučená', rate: baseRate, badge: null },
+            { name: 'Rychlé schválení', rate: baseRate + 0.3, badge: null }
         ];
         
-        const analysisResults = document.getElementById('analysis-results');
-        if (analysisResults) {
-            analysisResults.innerHTML = bankOffers.map((offer, idx) => {
-                const monthly = calculateMonthlyPayment(loanAmount, offer.rate, state.loanTerm);
-                const isRecommended = idx === 0;
-                
-                return `
-                    <div class="offer-card ${isRecommended ? 'selected' : ''}">
-                        ${isRecommended ? '<div class="text-xs bg-green-500 text-white px-2 py-1 rounded mb-2">NEJLEPŠÍ NABÍDKA</div>' : ''}
-                        <div class="font-bold text-lg mb-2">${offer.bank}</div>
-                        <div class="text-3xl font-bold mb-1" style="color: ${offer.color}">${offer.rate.toFixed(2)}%</div>
-                        <div class="text-sm text-gray-600 mb-3">p.a.</div>
-                        <div class="text-xl font-semibold">${formatCurrency(monthly)}</div>
-                        <div class="text-sm text-gray-500">měsíčně</div>
+        offersDiv.innerHTML = offers.map(offer => {
+            const payment = calculateMonthlyPayment(data.loanAmount, offer.rate, data.loanTerm);
+            return `
+                <div class="offer-card ${offer.badge ? 'recommended' : ''}">
+                    ${offer.badge ? `<div class="offer-badge">${offer.badge}</div>` : ''}
+                    <h4>${offer.name}</h4>
+                    <div style="font-size: 2rem; font-weight: 700; color: #0066ff;">
+                        ${offer.rate.toFixed(2)}%
                     </div>
-                `;
-            }).join('');
-        }
+                    <div style="margin: 1rem 0;">
+                        <div style="color: #6b7280;">Měsíční splátka</div>
+                        <div style="font-size: 1.5rem; font-weight: 600;">
+                            ${formatCurrency(payment)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
         
         // Generate metrics
-        const keyMetrics = document.getElementById('key-metrics');
-        if (keyMetrics) {
-            const bestMonthly = calculateMonthlyPayment(loanAmount, rates.best, state.loanTerm);
-            const totalPaid = bestMonthly * 12 * state.loanTerm;
-            const totalInterest = totalPaid - loanAmount;
-            
-            keyMetrics.innerHTML = `
-                <div class="flex justify-between py-2 border-b">
+        const totalPaid = data.monthlyPayment * data.loanTerm * 12;
+        const totalInterest = totalPaid - data.loanAmount;
+        
+        metricsDiv.innerHTML = `
+            <div style="padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>Výše úvěru:</span>
-                    <strong>${formatCurrency(loanAmount)}</strong>
+                    <strong>${formatCurrency(data.loanAmount)}</strong>
                 </div>
-                <div class="flex justify-between py-2 border-b">
+            </div>
+            <div style="padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>LTV:</span>
-                    <strong>${ltv.toFixed(1)}%</strong>
+                    <strong>${data.ltv.toFixed(1)}%</strong>
                 </div>
-                <div class="flex justify-between py-2 border-b">
+            </div>
+            <div style="padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>Celkem zaplaceno:</span>
                     <strong>${formatCurrency(totalPaid)}</strong>
                 </div>
-                <div class="flex justify-between py-2">
+            </div>
+            <div style="padding: 1rem 0;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>Přeplatek:</span>
-                    <strong class="text-red-600">${formatCurrency(totalInterest)}</strong>
+                    <strong style="color: #ef4444;">${formatCurrency(totalInterest)}</strong>
                 </div>
-                <div class="mt-4 p-3 bg-green-50 rounded text-sm">
-                    <strong>📊 Porovnali jsme ${getAllBanks().length} bank</strong><br>
-                    Ušetříte až ${formatCurrency(Math.random() * 50000 + 20000)} oproti průměru
-                </div>
-            `;
-        }
+            </div>
+        `;
         
         // Generate chart
+        generateChart();
+    }
+    
+    function generateChart() {
         const canvas = document.getElementById('loanChart');
-        if (canvas && typeof Chart !== 'undefined') {
-            const ctx = canvas.getContext('2d');
-            
-            // Destroy existing chart if it exists
-            if (window.loanChart) {
-                window.loanChart.destroy();
-            }
-            
-            // Generate data
-            const years = [];
-            const balances = [];
-            let balance = loanAmount;
-            const monthlyPayment = calculateMonthlyPayment(loanAmount, rates.likely, state.loanTerm);
-            const monthlyRate = (rates.likely / 100) / 12;
-            
-            for (let year = 0; year <= state.loanTerm; year++) {
-                years.push(year);
-                balances.push(Math.round(balance));
-                
-                for (let month = 0; month < 12 && balance > 0; month++) {
-                    const interest = balance * monthlyRate;
-                    const principal = monthlyPayment - interest;
-                    balance = Math.max(0, balance - principal);
-                }
-            }
-            
-            window.loanChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: 'Zůstatek úvěru',
-                        data: balances,
-                        borderColor: '#0066ff',
-                        backgroundColor: 'rgba(0, 102, 255, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            ticks: {
-                                callback: value => formatCurrency(value)
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-    
-    // =============================
-    // AI CHAT
-    // =============================
-    
-    function addChatMessage(message, sender = 'ai') {
-        const bubble = document.createElement('div');
-        bubble.className = `chat-bubble chat-bubble-${sender}`;
+        if (!canvas || !window.Chart) return;
         
-        if (sender === 'ai') {
-            bubble.innerHTML = `
-                <div class="font-semibold mb-2">🤖 AI Hypoteční Specialista</div>
-                ${message}
-            `;
-        } else {
-            bubble.textContent = message;
+        const ctx = canvas.getContext('2d');
+        
+        // Simple chart data
+        const years = [];
+        const balances = [];
+        let balance = data.loanAmount;
+        
+        for (let i = 0; i <= data.loanTerm; i++) {
+            years.push(i);
+            balances.push(Math.round(balance));
+            balance = balance * 0.95; // Simplified calculation
         }
         
-        elements.chatWindow.appendChild(bubble);
-        elements.chatWindow.scrollTop = elements.chatWindow.scrollHeight;
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [{
+                    label: 'Zůstatek úvěru',
+                    data: balances,
+                    borderColor: '#0066ff',
+                    backgroundColor: 'rgba(0, 102, 255, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
     }
     
-    function handleChatSubmit() {
-        const message = elements.chatInput.value.trim();
-        if (!message) return;
+    // AI Chat (simplified)
+    function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const messagesDiv = document.getElementById('chat-messages');
+        
+        if (!input || !messagesDiv || !input.value) return;
+        
+        const userMessage = input.value;
+        input.value = '';
         
         // Add user message
-        addChatMessage(message, 'user');
-        elements.chatInput.value = '';
+        messagesDiv.innerHTML += `
+            <div class="message user">${userMessage}</div>
+        `;
         
-        // Process message
-        const response = processAIMessage(message);
-        
-        // Add AI response
+        // Generate AI response
         setTimeout(() => {
-            addChatMessage(response.text);
+            const response = getAIResponse(userMessage);
+            messagesDiv.innerHTML += `
+                <div class="message ai">
+                    <strong>🤖 AI Hypoteční Specialista</strong><br>
+                    ${response}
+                </div>
+            `;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
             
-            // Show calculation if needed
-            if (response.showCalculation) {
-                showAICalculation();
+            // Update summary if calculation done
+            if (data.loanAmount > 0) {
+                updateAISummary();
             }
-            
-            // Update suggestions
-            updateSuggestions(response.suggestions);
         }, 500);
     }
     
-    function processAIMessage(message) {
+    function getAIResponse(message) {
         const msg = message.toLowerCase();
         
-        // Check for calculation trigger
-        if (msg.includes('koup') || msg.includes('byt')) {
-            return {
-                text: 'Výborně! Mám všechny údaje pro výpočet. Zobrazuji vaši personalizovanou nabídku:',
-                showCalculation: true,
-                suggestions: ['Změnit parametry', 'Kontakt na specialistu', 'Více informací']
-            };
-        }
-        
         if (msg.includes('sazb') || msg.includes('úrok')) {
-            return {
-                text: `Aktuální úrokové sazby (leden 2025):
-                <br><br>
-                📊 <strong>Pro LTV do 80%:</strong><br>
-                • 3 roky fixace: od 4.19%<br>
-                • 5 let fixace: od 3.99%<br>
-                • 7 let fixace: od 4.09%<br>
-                <br>
-                📊 <strong>Pro LTV do 90%:</strong><br>
-                • 3 roky fixace: od 4.69%<br>
-                • 5 let fixace: od 4.49%<br>
-                • 7 let fixace: od 4.59%<br>
-                <br>
-                Chcete spočítat konkrétní nabídku?`,
-                showCalculation: false,
-                suggestions: ['Spočítat hypotéku', 'Více o sazbách', 'Konzultace zdarma']
-            };
+            return 'Aktuální sazby se pohybují od 3.99% do 4.69% v závislosti na LTV a fixaci. Pro přesnou nabídku použijte kalkulačku.';
         }
         
-        return {
-            text: 'Rád vám pomohu s hypotékou. Co vás zajímá?',
-            showCalculation: false,
-            suggestions: ['Chci koupit byt', 'Aktuální sazby', 'Konzultace zdarma']
-        };
+        if (msg.includes('koup') || msg.includes('byt')) {
+            return 'Pro koupi bytu doporučuji mít alespoň 20% vlastních zdrojů. Přepněte do kalkulačky pro přesný výpočet.';
+        }
+        
+        return 'Rád vám pomohu s hypotékou. Použijte kalkulačku nebo mi napište konkrétní dotaz.';
     }
     
-    function showAICalculation() {
-        const calcDiv = document.createElement('div');
-        calcDiv.className = 'card mt-4';
-        calcDiv.innerHTML = `
-            <h4 class="font-bold mb-3">📊 Váš výpočet - TOP 3 banky</h4>
-            <div class="space-y-2">
-                <div class="flex justify-between p-3 bg-green-50 rounded">
-                    <div>
-                        <strong>🦊 ČMSS Liška</strong><br>
-                        <span class="text-sm">3.99% p.a.</span>
-                    </div>
-                    <div class="text-xl font-bold text-green-600">26 364 Kč</div>
-                </div>
-                <div class="flex justify-between p-3 bg-gray-50 rounded">
-                    <div>
-                        <strong>🏦 Hypoteční banka</strong><br>
-                        <span class="text-sm">4.19% p.a.</span>
-                    </div>
-                    <div class="text-xl font-bold">27 182 Kč</div>
-                </div>
-                <div class="flex justify-between p-3 bg-gray-50 rounded">
-                    <div>
-                        <strong>🏛️ ČSOB</strong><br>
-                        <span class="text-sm">4.29% p.a.</span>
-                    </div>
-                    <div class="text-xl font-bold">27 594 Kč</div>
-                </div>
-            </div>
-            <button class="btn btn-success w-full mt-4" onclick="switchMode('calculator'); updateStep(5);">
-                Získat konzultaci ZDARMA
-            </button>
-        `;
-        
-        elements.chatWindow.appendChild(calcDiv);
-        elements.chatWindow.scrollTop = elements.chatWindow.scrollHeight;
-        
-        // Update sidebar
-        const summary = document.getElementById('ai-calculation-summary');
+    function updateAISummary() {
+        const summary = document.getElementById('ai-summary');
         if (summary) {
             summary.innerHTML = `
-                <strong>Úvěr:</strong> 7 000 000 Kč<br>
-                <strong>LTV:</strong> 77.8%<br>
-                <strong>Nejlepší sazba:</strong> 3.99%<br>
-                <strong>Splátka od:</strong> 26 364 Kč
+                <p><strong>Úvěr:</strong> ${formatCurrency(data.loanAmount)}</p>
+                <p><strong>LTV:</strong> ${data.ltv.toFixed(1)}%</p>
+                <p><strong>Splátka:</strong> ${formatCurrency(data.monthlyPayment)}</p>
             `;
         }
     }
     
-    function updateSuggestions(suggestions) {
-        elements.chatSuggestions.innerHTML = '';
-        suggestions.forEach(text => {
-            const btn = document.createElement('button');
-            btn.className = 'suggestion-btn';
-            btn.textContent = text;
-            btn.onclick = () => {
-                elements.chatInput.value = text;
-                handleChatSubmit();
-            };
-            elements.chatSuggestions.appendChild(btn);
-        });
+    function handleSidebarAction(action) {
+        if (action.includes('parametry')) {
+            switchMode('calculator');
+        } else if (action.includes('specialistu')) {
+            currentStep = 5;
+            switchMode('calculator');
+            updateStepDisplay();
+        }
     }
     
-    // =============================
-    // HELPERS
-    // =============================
-    
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `fixed bottom-4 right-4 p-4 rounded-lg text-white z-50`;
+    // Form Submit
+    function handleFormSubmit(e) {
+        e.preventDefault();
         
-        if (type === 'warning') {
-            toast.style.background = '#f59e0b';
-        } else if (type === 'success') {
-            toast.style.background = '#10b981';
-        } else {
-            toast.style.background = '#3b82f6';
+        const successDiv = document.getElementById('form-success');
+        if (successDiv) {
+            successDiv.classList.remove('hidden');
+            e.target.style.display = 'none';
         }
-        
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
+    }
+    
+    // Bank Modal
+    function showBankModal() {
+        const modal = document.getElementById('bank-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+    
+    window.closeBankModal = function() {
+        const modal = document.getElementById('bank-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    // Helpers
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('cs-CZ', {
+            style: 'currency',
+            currency: 'CZK',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
     }
     
     function updateLiveCounter() {
-        const hour = new Date().getHours();
-        let count = 15;
-        
-        if (hour >= 9 && hour < 17) {
-            count = Math.floor(Math.random() * 10) + 20;
-        } else if (hour >= 17 && hour < 22) {
-            count = Math.floor(Math.random() * 8) + 12;
-        } else {
-            count = Math.floor(Math.random() * 5) + 3;
-        }
-        
-        if (elements.liveCount) {
-            elements.liveCount.textContent = count;
-        }
-    }
-    
-    // =============================
-    // EVENT LISTENERS
-    // =============================
-    
-    // Mode switching
-    elements.modeBtns.forEach(btn => {
-        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
-    });
-    
-    // Navigation
-    elements.prevBtn?.addEventListener('click', () => navigate(-1));
-    elements.nextBtn?.addEventListener('click', () => navigate(1));
-    
-    // Intent selection
-    document.querySelectorAll('.intent-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectIntent(btn.dataset.intent);
-            if (currentStep === 1) {
-                setTimeout(() => navigate(1), 300);
+        const counter = document.getElementById('live-count');
+        if (counter) {
+            const hour = new Date().getHours();
+            let count = 10;
+            
+            if (hour >= 9 && hour < 17) {
+                count = Math.floor(Math.random() * 5) + 15;
+            } else if (hour >= 17 && hour < 22) {
+                count = Math.floor(Math.random() * 5) + 10;
+            } else {
+                count = Math.floor(Math.random() * 3) + 3;
             }
-        });
-    });
-    
-    // Input changes
-    const inputs = [
-        elements.propertyValue,
-        elements.ownResources,
-        elements.loanTerm,
-        elements.fixation,
-        elements.monthlyIncome,
-        elements.monthlyLiabilities
-    ];
-    
-    inputs.forEach(input => {
-        if (input) {
-            input.addEventListener('input', updateCalculations);
-            input.addEventListener('change', updateCalculations);
+            
+            counter.textContent = count;
         }
-    });
-    
-    // Chat
-    elements.chatSend?.addEventListener('click', handleChatSubmit);
-    elements.chatInput?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleChatSubmit();
-        }
-    });
-    
-    // Suggestions
-    document.querySelectorAll('.suggestion-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            elements.chatInput.value = btn.textContent;
-            handleChatSubmit();
-        });
-    });
-    
-    // Show all banks
-    elements.showBanksBtn?.addEventListener('click', () => {
-        const allBanks = getAllBanks();
-        alert(`Spolupracujeme s ${allBanks.length} bankami:\n\n${allBanks.join(', ')}`);
-    });
-    
-    // Form submission
-    elements.leadForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        elements.leadForm.style.display = 'none';
-        elements.formSuccess.classList.remove('hidden');
-    });
-    
-    // =============================
-    // INITIALIZATION
-    // =============================
-    
-    function init() {
-        // Set current date
-        if (elements.lastUpdated) {
-            elements.lastUpdated.textContent = new Date().toLocaleDateString('cs-CZ');
-        }
-        
-        // Update live counter
-        updateLiveCounter();
-        setInterval(updateLiveCounter, 5000);
-        
-        // Initialize calculations
-        updateCalculations();
-        
-        // Set default suggestions
-        updateSuggestions(['Chci koupit byt', 'Aktuální sazby', 'Konzultace zdarma']);
-        
-        console.log('Hypotéka AI v4.0 - Initialized');
     }
     
-    // Start
-    init();
+    function updateDateDisplay() {
+        const dateEl = document.getElementById('update-date');
+        if (dateEl) {
+            const date = new Date();
+            dateEl.textContent = date.toLocaleDateString('cs-CZ');
+        }
+    }
     
-    // Make functions globally available
-    window.switchMode = switchMode;
-    window.navigate = navigate;
-    window.selectIntent = selectIntent;
-    window.updateCalculations = updateCalculations;
+    function showMessage(msg) {
+        alert(msg); // Simple for now, can be replaced with better UI
+    }
     
-    console.log('Hypotéka AI v4.0 - Ready!');
-}
-
-// Initialize when ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    initializeApp();
-}
+    console.log('Hypotéka AI v5.0 - Ready');
+})();
