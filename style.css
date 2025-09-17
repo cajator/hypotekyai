@@ -1,177 +1,661 @@
+/* Hypotéka AI - Profesionální redesign 2025 */
+
+:root {
+    --primary-blue: #0066ff;
+    --primary-dark: #004fc4;
+    --secondary-blue: #4d94ff;
+    --success-green: #00b341;
+    --warning-orange: #ff9500;
+    --danger-red: #ff3b30;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a5568;
+    --text-light: #718096;
+    --bg-white: #ffffff;
+    --bg-light: #f7f9fc;
+    --border-light: rgba(0, 102, 255, 0.1);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-white);
 }
 
-/* Klidnější background */
+/* Hero gradient background */
 .gradient-bg {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     min-height: 100vh;
+    background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 50%, #e6f2ff 100%);
+    position: relative;
+    overflow: hidden;
 }
 
-/* Jednodušší glassmorphism */
-.glass-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+.gradient-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 20% 80%, rgba(0, 102, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 178, 65, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(77, 148, 255, 0.02) 0%, transparent 50%);
+    animation: float 20s ease-in-out infinite;
 }
 
-/* Klidnější metric cards */
+@keyframes float {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    33% { transform: translateX(-20px) translateY(-20px); }
+    66% { transform: translateX(20px) translateY(10px); }
+}
+
+/* Header styles */
+header h1 {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+}
+
+header p {
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* Výrazný FREE consultation banner */
+.free-consultation-banner {
+    background: linear-gradient(135deg, var(--success-green) 0%, #00d94f 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 1.5rem auto;
+    font-weight: 600;
+    font-size: 1.1rem;
+    animation: pulse-banner 2s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(0, 179, 65, 0.3);
+}
+
+@keyframes pulse-banner {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.free-consultation-banner::before {
+    content: '✓';
+    background: white;
+    color: var(--success-green);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Metric cards - výraznější kontrast */
 .metric-card {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-.metric-card:hover {
-    background: rgba(255, 255, 255, 1);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--bg-white);
+    border: 2px solid var(--border-light);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
 }
 
-/* Subtilnější timeline */
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-blue);
+}
+
+.metric-card:hover::before {
+    transform: scaleX(1);
+}
+
+.metric-card .metric-value {
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 800;
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.metric-card .metric-label {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Glass card s lepším kontrastem */
+.glass-card {
+    background: var(--bg-white);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-md);
+    padding: 2rem;
+    position: relative;
+}
+
+.glass-card.highlighted {
+    background: linear-gradient(135deg, var(--bg-white) 0%, #f8fbff 100%);
+    border: 2px solid var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1), var(--shadow-lg);
+}
+
+/* Timeline vylepšený */
 .timeline-step {
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.timeline-step.active {
-    transform: scale(1.05);
+
+.step-circle {
+    width: 56px;
+    height: 56px;
+    background: var(--bg-white);
+    border: 3px solid #e5e7eb;
+    color: var(--text-light);
+    font-weight: 700;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .timeline-step.active .step-circle {
-    background: #3b82f6;
+    background: var(--primary-blue);
     color: white;
-    border: 2px solid #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 8px rgba(0, 102, 255, 0.1);
+    transform: scale(1.1);
 }
+
 .timeline-step.completed .step-circle {
-    background: #10b981;
+    background: var(--success-green);
     color: white;
-    border: 2px solid #10b981;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    border-color: var(--success-green);
 }
+
 .timeline-line {
-    height: 3px;
+    height: 4px;
     background: #e5e7eb;
     border-radius: 2px;
 }
+
 .timeline-progress {
     height: 100%;
-    background: #10b981;
+    background: linear-gradient(90deg, var(--success-green) 0%, var(--primary-blue) 100%);
     border-radius: 2px;
-    transition: width 0.5s ease;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Forma sections */
-.form-section {
-    display: none;
-    animation: fadeInUp 0.3s ease-out;
-}
-.form-section.active { 
-    display: block; 
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Vylepšené intent buttons */
+/* Intent buttons - výraznější */
 .intent-btn {
-    transition: all 0.2s ease;
-    background: white;
+    background: var(--bg-white);
     border: 2px solid #e5e7eb;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
+
+.intent-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(0, 102, 255, 0.05);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
 .intent-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    border-color: #3b82f6;
+    transform: translateY(-4px) scale(1.02);
+    border-color: var(--primary-blue);
+    box-shadow: var(--shadow-lg);
 }
+
+.intent-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
 .intent-btn.selected {
-    background: #3b82f6;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
     color: white;
-    border-color: #3b82f6;
+    border-color: var(--primary-blue);
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.3);
 }
 
-/* Čistší inputs */
+/* Modern inputs */
 .modern-input {
-    background: white;
+    background: var(--bg-white);
     border: 2px solid #e5e7eb;
-    transition: all 0.2s ease;
-    font-size: 16px;
-}
-.modern-input:focus {
-    border-color: #3b82f6;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    outline: none;
-}
-
-/* Vylepšený Chat interface */
-#ai-mode .glass-card {
-    height: 650px;
-    display: flex;
-    flex-direction: column;
-}
-
-#chat-window {
-    flex: 1;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e0 transparent;
-}
-
-#chat-window::-webkit-scrollbar {
-    width: 6px;
-}
-#chat-window::-webkit-scrollbar-track {
-    background: transparent;
-}
-#chat-window::-webkit-scrollbar-thumb {
-    background-color: #cbd5e0;
-    border-radius: 3px;
-}
-
-.chat-bubble {
-    max-width: 80%;
+    border-radius: 12px;
     padding: 14px 18px;
-    border-radius: 18px;
-    margin-bottom: 10px;
-    animation: fadeIn 0.2s ease-out;
-    word-wrap: break-word;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    width: 100%;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.modern-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+    background: var(--bg-white);
+}
+
+.modern-input:hover {
+    border-color: var(--secondary-blue);
+}
+
+/* Labels vylepšené */
+label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+/* Chat interface redesign */
+.chat-bubble {
+    max-width: 85%;
+    padding: 16px 20px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    animation: slideInFade 0.3s ease-out;
+    line-height: 1.5;
+}
+
+@keyframes slideInFade {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0);
+    }
 }
 
 .chat-bubble-user {
-    background: #3b82f6;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
     color: white;
     align-self: flex-end;
-    border-bottom-right-radius: 6px;
-}
-.chat-bubble-ai {
-    background: #f8fafc;
-    color: #374151;
-    align-self: flex-start;
-    border: 1px solid #e5e7eb;
-    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0, 102, 255, 0.2);
 }
 
-.thinking-dots {
-    display: inline-block;
+.chat-bubble-ai {
+    background: var(--bg-light);
+    color: var(--text-primary);
+    align-self: flex-start;
+    border: 1px solid var(--border-light);
+    border-bottom-left-radius: 4px;
 }
+
+.chat-bubble-ai .ai-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.chat-bubble-ai .ai-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* Suggestion buttons redesign */
+.suggestion-btn {
+    background: var(--bg-white);
+    border: 2px solid var(--primary-blue);
+    color: var(--primary-blue);
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.suggestion-btn:hover {
+    background: var(--primary-blue);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+
+/* Offer cards redesign */
+.offer-card {
+    background: var(--bg-white);
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.offer-card.recommended {
+    border-color: var(--success-green);
+    background: linear-gradient(135deg, var(--bg-white) 0%, #f0fff4 100%);
+}
+
+.offer-card.recommended::after {
+    content: 'KONZULTACE ZDARMA';
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background: linear-gradient(135deg, var(--success-green) 0%, #00d94f 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 179, 65, 0.3);
+}
+
+.offer-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-blue);
+}
+
+.offer-card.selected {
+    border-color: var(--primary-blue);
+    background: linear-gradient(135deg, var(--bg-white) 0%, #f0f7ff 100%);
+    box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1), var(--shadow-lg);
+}
+
+/* Buttons redesign */
+button {
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+}
+
+.btn-secondary {
+    background: var(--bg-white);
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.btn-secondary:hover {
+    background: var(--primary-blue);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-green) 0%, #00d94f 100%);
+    color: white;
+    border: none;
+    padding: 16px 40px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 18px;
+    box-shadow: 0 4px 16px rgba(0, 179, 65, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 179, 65, 0.4);
+}
+
+/* Live counter puls */
+.live-indicator {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    background: var(--bg-white);
+    padding: 8px 16px;
+    border-radius: 25px;
+    box-shadow: var(--shadow-sm);
+}
+
+.live-indicator::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--success-green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { 
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(0, 179, 65, 0.4);
+    }
+    70% { 
+        opacity: 0.6;
+        box-shadow: 0 0 0 10px rgba(0, 179, 65, 0);
+    }
+    100% { 
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(0, 179, 65, 0);
+    }
+}
+
+/* Mode switcher vylepšený */
+.mode-btn {
+    background: transparent;
+    border: none;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.mode-btn:hover {
+    color: var(--primary-blue);
+}
+
+.mode-btn.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+}
+
+/* Quick results card */
+#quick-results {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+    border: 2px solid var(--primary-blue);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+#monthly-payment-display {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 800;
+    color: var(--primary-blue);
+}
+
+/* Chart container stabilní */
+#loanChart {
+    height: 320px !important;
+    max-height: 320px !important;
+}
+
+/* Tooltips vylepšené */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    border-bottom: 2px dotted var(--primary-blue);
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 250px;
+    background: var(--text-primary);
+    color: white;
+    text-align: left;
+    border-radius: 12px;
+    padding: 12px 16px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -125px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: var(--shadow-lg);
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -8px;
+    border-width: 8px;
+    border-style: solid;
+    border-color: var(--text-primary) transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(-5px);
+}
+
+/* Form sections animace */
+.form-section {
+    display: none;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.form-section.active {
+    display: block;
+}
+
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0);
+    }
+}
+
+/* Details/Summary styling */
+details {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+details summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--text-primary);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+details summary::after {
+    content: '▼';
+    font-size: 12px;
+    color: var(--primary-blue);
+    transition: transform 0.3s ease;
+}
+
+details[open] summary::after {
+    transform: rotate(180deg);
+}
+
+details[open] summary {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* Thinking dots animace */
 .thinking-dots::after {
     content: '...';
     display: inline-block;
-    animation: thinkingDots 1.2s infinite;
+    animation: thinkingDots 1.5s infinite;
 }
 
 @keyframes thinkingDots {
@@ -180,274 +664,92 @@ body {
     66% { content: '...'; }
 }
 
-/* Jednodušší suggestion buttons */
-.suggestion-btn {
-    background: white;
-    border: 1px solid #d1d5db;
-    color: #374151;
-    font-weight: 500;
-    padding: 8px 16px;
+/* Success message */
+#form-success {
+    background: linear-gradient(135deg, #f0fff4 0%, #e6f9ef 100%);
+    border: 2px solid var(--success-green);
     border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 14px;
-}
-.suggestion-btn:hover {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-    transform: translateY(-1px);
-}
-
-/* Vylepšené offer cards */
-.offer-card {
-    transition: all 0.2s ease;
-    cursor: pointer;
-    background: white;
-    border: 2px solid #e5e7eb;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-.offer-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    border-color: #3b82f6;
-}
-.offer-card.selected {
-    border-color: #10b981;
-    background: #f0fdf4;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
-}
-
-/* Stabilní chart container */
-#loanChart {
-    height: 280px !important;
-    max-height: 280px !important;
-}
-
-.chart-container {
-    height: 280px;
-    position: relative;
-}
-
-/* Jednoduché tooltips */
-.tooltip {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-    border-bottom: 1px dotted #6b7280;
-}
-.tooltip .tooltiptext {
-    visibility: hidden;
-    width: 200px;
-    background-color: #374151;
-    color: white;
+    padding: 2rem;
     text-align: center;
-    border-radius: 8px;
-    padding: 10px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -100px;
-    opacity: 0;
-    transition: opacity 0.2s;
-    font-size: 14px;
-}
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Čistší live indicator */
-.live-indicator {
-    position: relative;
-    display: inline-block;
-    color: #6b7280;
-}
-.live-indicator::before {
-    content: '';
-    position: absolute;
-    left: -12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    background: #10b981;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
-
-/* Jednoduché details/summary */
-details > summary {
-    cursor: pointer;
-    list-style: none;
-    padding: 16px 0;
-    font-weight: 600;
-    color: #374151;
-}
-details > summary::-webkit-details-marker {
-    display: none;
-}
-details[open] > summary {
-    border-bottom: 1px solid #e5e7eb;
-    margin-bottom: 16px;
-}
-
-/* Čistší navigační tlačítka */
-#navigation-buttons button {
-    font-size: 16px;
-    font-weight: 600;
-    padding: 12px 24px;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-}
-
-#prev-btn {
-    background: #f3f4f6;
-    color: #374151;
-}
-#prev-btn:hover {
-    background: #e5e7eb;
-    transform: translateY(-1px);
-}
-
-#next-btn {
-    background: #3b82f6;
-    color: white;
-}
-#next-btn:hover {
-    background: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-/* Vylepšené formulářové tlačítka */
-#submit-lead-btn {
-    background: #10b981;
-    color: white;
-    border: none;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-#submit-lead-btn:hover {
-    background: #059669;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-/* Mode switcher vylepšení */
-.mode-btn {
-    font-size: 16px;
-    font-weight: 600;
-    padding: 12px 24px;
-    transition: all 0.2s ease;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-}
-.mode-btn.border-white {
-    border-bottom: 3px solid #3b82f6;
-    color: #3b82f6;
-}
-
-/* Vylepšené hlavní metriky */
-#quick-results {
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
     .glass-card {
-        margin: 0 12px;
-        padding: 20px;
-        border-radius: 12px;
+        margin: 0 1rem;
+        padding: 1.5rem;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem !important;
     }
     
     .timeline-step {
-        font-size: 13px;
+        font-size: 12px;
     }
     
     .step-circle {
-        width: 40px !important;
-        height: 40px !important;
-        font-size: 16px;
-    }
-    
-    .intent-btn {
-        min-height: 100px;
-        padding: 12px;
-    }
-    
-    .modern-input {
-        padding: 12px 14px;
-        font-size: 16px;
+        width: 44px !important;
+        height: 44px !important;
     }
     
     .chat-bubble {
-        max-width: 85%;
+        max-width: 90%;
         padding: 12px 16px;
     }
     
-    #ai-mode .glass-card {
-        height: 550px;
-    }
-    
-    #loanChart {
-        height: 220px !important;
-        max-height: 220px !important;
-    }
-
     .mode-btn {
         padding: 10px 16px;
         font-size: 14px;
     }
+    
+    #loanChart {
+        height: 250px !important;
+    }
 }
 
-/* Mode content visibility */
-.mode-content {
-    display: block;
-}
-.mode-content.hidden {
-    display: none;
+/* Accessibility improvements */
+:focus-visible {
+    outline: 3px solid var(--primary-blue);
+    outline-offset: 2px;
 }
 
-/* Vylepšené spacing */
-.container {
-    max-width: 1200px;
+/* Loading states */
+.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
 }
 
-h1, h2, h3 {
-    color: #1f2937;
-    font-weight: 700;
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    border: 3px solid var(--primary-blue);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-h1 {
-    background: linear-gradient(135deg, #1f2937 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
-/* Odstranění příliš agresivních efektů */
-* {
-    box-sizing: border-box;
-}
-
-/* Zabránění zbytečným animacím při načítání */
-.preload * {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
-    transition-duration: 0s !important;
-    transition-delay: 0s !important;
+/* Print styles */
+@media print {
+    .gradient-bg {
+        background: white;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
 }
