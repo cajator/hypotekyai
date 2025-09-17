@@ -47,7 +47,7 @@ function performCalculations() {
     let loan = 0, pValue = state.propertyValue || 0;
     switch (state.intent) {
         case 'vystavba': pValue = (state.landValue || 0) + (state.constructionCost || 0); loan = pValue - (state.ownResources || 0); break;
-        case 'refinancovani': loan = (state.refinancAmount || 0) + (state.extraLoan || 0); break;
+        case 'refinancovani': loan = (state.refinanceAmount || 0) + (state.extraLoan || 0); break;
         default: loan = pValue - (state.ownResources || 0); break;
     }
     state.loanAmount = loan > 0 ? loan : 0;
@@ -135,7 +135,7 @@ function validateStep(step) {
     switch (step) {
         case 1: return state.intent !== null;
         case 2:
-            if (state.intent === 'refinancovani') return state.propertyValue > 0 && state.refinancAmount > 0;
+            if (state.intent === 'refinancovani') return state.propertyValue > 0 && state.refinanceAmount > 0;
             if (state.intent === 'vystavba') return state.landValue > 0 && state.constructionCost > 0;
             return state.propertyValue > 0 && state.propertyValue >= (state.ownResources || 0);
         case 3: return parseCurrency(document.getElementById('monthlyIncome').value) > 0;
@@ -149,7 +149,8 @@ function initAiChat() {
     DOMElements.aiChatMessages.innerHTML = '';
     const welcomeText = "Dobrý den! Jsem váš osobní hypoteční asistent. Jak vám mohu pomoci s financováním bydlení?";
     addMessageToChat('ai', welcomeText);
-    state.aiConversation.push({ role: 'model', parts: [{ text: welcomeText }] });
+    // KRITICKÁ OPRAVA: Počáteční zpráva se již nepřidává do historie pro AI, pouze se zobrazí.
+    // state.aiConversation.push({ role: 'model', parts: [{ text: welcomeText }] });
     renderAiSuggestions(['Chci koupit byt', 'Potřebuji refinancovat', 'Jaké jsou úrokové sazby?']);
     updateAiSummary();
 }
@@ -177,7 +178,7 @@ function updateAiSummary() {
     if (state.intent) html += `<div class="metric-item"><span>Záměr:</span> <span class="metric-item-value">${state.intent}</span></div>`;
     if (state.propertyValue) html += `<div class="metric-item"><span>Cena:</span> <span class="metric-item-value">${formatCurrency(state.propertyValue)}</span></div>`;
     if (state.ownResources) html += `<div class="metric-item"><span>Vlastní zdroje:</span> <span class="metric-item-value">${formatCurrency(state.ownResources)}</span></div>`;
-    if (state.refinancAmount) html += `<div class="metric-item"><span>Refinancování:</span> <span class="metric-item-value">${formatCurrency(state.refinancAmount)}</span></div>`;
+    if (state.refinanceAmount) html += `<div class="metric-item"><span>Refinancování:</span> <span class="metric-item-value">${formatCurrency(state.refinanceAmount)}</span></div>`;
     DOMElements.aiSummary.innerHTML = html || '<p>Zatím nemáme dostatek údajů.</p>';
 }
 
@@ -259,3 +260,4 @@ function handleFinalFormSubmit(e) {
 }
 
 document.addEventListener('DOMContentLoaded', initialize);
+

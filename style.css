@@ -100,7 +100,17 @@ h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; letter-spacing: -1.
 .offer-card.best-offer { border-color: var(--success-green); background: #F0FDF4; }
 .offer-card h3 { font-size: 18px; margin-bottom: 8px; } .offer-card .rate { font-size: 32px; font-weight: 700; color: var(--primary-blue); margin-bottom: 16px; } .offer-card .payment { font-size: 20px; font-weight: 600; } .offer-card .label { font-size: 14px; color: var(--text-secondary); }
 .analysis-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.metrics-card, .chart-card { background: var(--background-light); border-radius: var(--border-radius-md); padding: 24px; }
+.metrics-card, .chart-card {
+    background: var(--background-light);
+    border-radius: var(--border-radius-md);
+    padding: 24px;
+    /* OPRAVA: Přidáno pro prevenci zmenšování obsahu v gridu */
+    min-width: 0;
+}
+.chart-card {
+    /* OPRAVA: Přidáno pro správné fungování Chart.js */
+    position: relative;
+}
 .metrics-card h3, .chart-card h3 { font-size: 18px; margin-bottom: 16px; }
 .metric-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
 .metric-item:last-child { border: none; }
@@ -148,3 +158,4 @@ h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; letter-spacing: -1.
     .stats-bar, .intent-grid { grid-template-columns: 1fr 1fr; }
     .form-grid { grid-template-columns: 1fr; }
 }
+
