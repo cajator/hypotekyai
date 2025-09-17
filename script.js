@@ -1,7 +1,16 @@
 // Hypotéka AI - Finální verze 4.0
 // Kompletní JavaScript s všemi opravami
 
-document.addEventListener('DOMContentLoaded', function() {
+// Wait for DOM to be fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already loaded
+    initializeApp();
+}
+
+function initializeApp() {
+    console.log('Hypotéka AI - Initializing...');
     
     // =============================
     // KONFIGURACE
@@ -763,4 +772,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start
     init();
-});
+    
+    // Make functions globally available
+    window.switchMode = switchMode;
+    window.navigate = navigate;
+    window.selectIntent = selectIntent;
+    window.updateCalculations = updateCalculations;
+    
+    console.log('Hypotéka AI v4.0 - Ready!');
+}
+
+// Initialize when ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+}

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Hypotéka AI - Získejte nejlepší hypotéku z 23 bank. Konzultace ZDARMA.">
     <title>Hypotéka AI - Konzultace ZDARMA | 23 bank</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <style>
         * {
             box-sizing: border-box;
@@ -638,19 +638,6 @@
         </footer>
     </div>
     
-    <!-- Bank list modal -->
-    <div id="banks-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-2xl mx-4">
-            <h3 class="text-xl font-bold mb-4">Spolupracujeme s 23 bankami</h3>
-            <div class="grid grid-cols-3 gap-3 text-sm">
-                <div><strong>Hlavní banky:</strong><br>ČSOB, KB, Česká spořitelna, Raiffeisen, UniCredit, Hypoteční banka</div>
-                <div><strong>Online banky:</strong><br>Air Bank, Moneta, mBank, Creditas</div>
-                <div><strong>Stavební spořitelny:</strong><br>ČMSS, Modrá pyramida, SSČS, Raiffeisen SS</div>
-            </div>
-            <button onclick="document.getElementById('banks-modal').classList.add('hidden')" class="btn btn-primary mt-4">Zavřít</button>
-        </div>
-    </div>
-    
-    <script src="script-final.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
