@@ -1,40 +1,52 @@
-Netlify Configuration for Hypotéka AI
-This file configures the build, functions, and redirects.
-
 [build]
-We are deploying a static site, so we just need to publish the root directory.
+  # Build settings
+  publish = "."
+  functions = "netlify/functions"
 
-publish = "."
+[build.environment]
+  # Environment variables for build
+  NODE_VERSION = "18"
 
-[functions]
-Specifies the directory where Netlify will find the serverless functions.
+[[headers]]
+  # Apply these headers to all routes
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # CORS headers for API calls
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
 
-directory = "functions/"
-This is the correct rule for a Single Page Application (SPA).
-It rewrites all paths to index.html with a 200 status, allowing client-side routing.
-
+# Redirect rules for SPA behavior
 [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
-Security and caching headers for all assets.
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
-[[headers]]
-for = "/*"
-[headers.values]
-# Security headers
-X-Frame-Options = "DENY"
-X-Content-Type-Options = "nosniff"
-X-XSS-Protection = "1; mode=block"
-Referrer-Policy = "strict-origin-when-cross-origin"
+# Form handling
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
 
-# Cache assets for 1 hour in the browser.
-Cache-Control = "public, max-age=3600"
+# Error pages
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
-Specific headers for the main HTML file to prevent caching.
-
-[[headers]]
-for = "/index.html"
-[headers.values]
-# Do not cache the HTML file to ensure users always get the latest version.
-Cache-Control = "no-cache, no-store, must-revalidate"
+# Functions configuration
+[functions]
+  # Directory for serverless functions
+  directory = "netlify/functions/"
+  
+  # Individual function settings
+  [functions.gemini]
+    # Timeout for AI function (max 10 seconds for Netlify)
+    timeout = 10
