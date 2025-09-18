@@ -1,63 +1,36 @@
+/* Hypotéka AI - Minimální CSS pro Tailwind kompatibilitu */
+/* Verze 2.0 - Opravená */
+
 body {
-    font-family: 'Inter', sans-serif;
-    line-height: 1.6;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Background */
+/* Gradient background */
 .gradient-bg {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
 }
 
-/* Glass morphism */
+/* Glass efekt */
 .glass-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-radius: 16px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 /* Metric cards */
 .metric-card {
     background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .metric-card:hover {
-    background: rgba(255, 255, 255, 1);
+    background: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Timeline */
 .timeline-step {
-    transition: all 0.3s ease;
     cursor: pointer;
-    position: relative;
-    z-index: 10;
-}
-
-.timeline-step.active {
-    transform: scale(1.05);
-}
-
-.timeline-step.active .step-circle {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-}
-
-.timeline-step.completed .step-circle {
-    background: #10b981;
-    color: white;
-    border-color: #10b981;
 }
 
 .timeline-line {
@@ -73,23 +46,18 @@ body {
 
 /* Intent buttons */
 .intent-btn {
-    background: white;
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 10;
+    transition: all 0.3s;
 }
 
 .intent-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    border-color: #3b82f6 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .intent-btn.selected {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6 !important;
+    background: #3b82f6 !important;
+    color: white !important;
 }
 
 .intent-btn.selected p,
@@ -97,60 +65,28 @@ body {
     color: white !important;
 }
 
-/* Forms */
+/* Inputs */
 .modern-input {
-    background: white;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
 }
 
 .modern-input:focus {
-    outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Mode switcher */
 .mode-btn {
-    background: transparent;
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 10;
 }
 
-.mode-btn.active {
-    border-bottom-color: white !important;
-}
-
-/* Chat */
-.chat-bubble {
-    padding: 1rem 1.5rem;
-    border-radius: 16px;
-    max-width: 80%;
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
+/* Chat bubbles */
 .chat-bubble-user {
     background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    color: white;
-    margin-left: auto;
-    text-align: right;
 }
 
 .chat-bubble-ai {
     background: white;
-    color: #1f2937;
 }
 
 /* Form sections */
@@ -160,23 +96,6 @@ body {
 
 .form-section.active {
     display: block;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from { 
-        opacity: 0;
-    }
-    to { 
-        opacity: 1;
-    }
-}
-
-/* Navigation buttons */
-#navigation-buttons button {
-    cursor: pointer;
-    position: relative;
-    z-index: 10;
 }
 
 /* Live indicator */
@@ -192,22 +111,15 @@ body {
 }
 
 @keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 /* Tooltip */
 .tooltip {
     position: relative;
     cursor: help;
-    border-bottom: 1px dotted currentColor;
 }
 
 .tooltiptext {
@@ -219,7 +131,7 @@ body {
     border-radius: 6px;
     padding: 5px;
     position: absolute;
-    z-index: 100;
+    z-index: 1;
     bottom: 125%;
     left: 50%;
     margin-left: -100px;
@@ -245,56 +157,5 @@ body {
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Fix pro klikatelnost */
-button,
-.intent-btn,
-.mode-btn,
-a,
-input,
-select,
-textarea {
-    position: relative;
-    z-index: 10;
-}
-
-/* Chat input fix */
-#chat-input {
-    position: relative;
-    z-index: 10;
-}
-
-#chat-send {
-    position: relative;
-    z-index: 10;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .glass-card {
-        padding: 1rem;
-    }
-    
-    .chat-bubble {
-        max-width: 95%;
-    }
-    
-    .metric-card p {
-        font-size: 0.875rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .intent-btn {
-        min-height: 120px;
-        padding: 1rem;
-    }
-    
-    .intent-btn span {
-        font-size: 2rem;
-    }
+    to { transform: rotate(360deg); }
 }
