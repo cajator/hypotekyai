@@ -1,14 +1,12 @@
 {
   "name": "hypoteka-ai",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Hypotéka AI - Chytrá hypoteční kalkulačka s AI",
   "main": "index.html",
   "type": "module",
   "scripts": {
     "start": "netlify dev",
-    "dev": "netlify dev",
-    "deploy": "netlify deploy --prod",
-    "build": ":"
+    "dev": "netlify dev"
   },
   "author": "Hypotéka AI",
   "license": "MIT",
@@ -19,3 +17,4 @@
     "netlify-cli": "^17.0.0"
   }
 }
+

@@ -1,8 +1,6 @@
 # Konfigurace pro build a nasazení na Netlify
 [build]
-  # Adresář, který se má publikovat
   publish = "."
-  # Adresář se serverless funkcemi
   functions = "netlify/functions"
 
 [functions]
@@ -24,10 +22,10 @@
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-    # Content Security Policy - povoluje zdroje jen z důvěryhodných domén
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data:;"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    # OPRAVENÁ Content Security Policy
+    # Povoluje skripty z cdn.tailwindcss.com a cdn.jsdelivr.net (pro Chart.js)
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data:;"
 
 # Pravidla pro cachování statických souborů
 [[headers]]
@@ -39,3 +37,4 @@
   for = "*.js"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+

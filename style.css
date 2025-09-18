@@ -1,16 +1,15 @@
-/* Hypotéka AI - Vylepšené CSS */
-/* Verze 3.0 */
+/* Hypotéka AI - Vylepšené a opravené CSS */
+/* Verze 4.0 */
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Hlavní gradient pozadí */
 .gradient-bg {
     background: linear-gradient(135deg, #1e3a8a 0%, #3b0764 100%);
+    min-height: 100vh;
 }
 
-/* Hlavní "skleněná" karta */
 .glass-card {
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(20px);
@@ -18,55 +17,52 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Vnitřní "skleněná" karta pro kontrast */
 .glass-card-inner {
     background: rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Karty s metrikami */
 .metric-card {
     background: rgba(255, 255, 255, 0.9);
     transition: all 0.3s ease;
 }
-
 .metric-card:hover {
-    background: white;
-    transform: translateY(-5px) scale(1.03);
+    transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
-/* Kroky v časové ose */
+/* Timeline */
+.timeline-step { cursor: pointer; }
 .timeline-step .step-circle {
     transition: all 0.3s ease;
-    border-color: #9ca3af; /* Změna barvy pro neaktivní */
+    border-color: #9ca3af;
+    background-color: #fff;
     color: #9ca3af;
 }
-
+.timeline-step p {
+    color: #d1d5db;
+    transition: all 0.3s ease;
+}
 .timeline-step.active .step-circle {
     border-color: #3b82f6;
     background-color: #3b82f6;
     color: white;
     transform: scale(1.1);
 }
-
 .timeline-step.completed .step-circle {
     border-color: #10b981;
     background-color: #10b981;
     color: white;
 }
-
 .timeline-step.active p {
-    color: white !important;
+    color: white;
     font-weight: 600;
 }
-
 .timeline-line {
     height: 4px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 2px;
 }
-
 .timeline-progress {
     height: 100%;
     background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
@@ -74,127 +70,114 @@ body {
     border-radius: 2px;
 }
 
-/* Tlačítka pro výběr záměru */
+/* Tlačítka a formulářové prvky */
 .intent-btn {
-    cursor: pointer;
+    background: rgba(255, 255, 255, 0.8);
     transition: all 0.3s ease;
 }
-
 .intent-btn:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background: white;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
-
 .intent-btn.selected {
-    transform: translateY(-2px) scale(1.02);
-    background: #3b82f6 !important;
-    color: white !important;
+    background: #3b82f6;
+    color: white;
     border-color: #60a5fa;
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
 }
 
-.intent-btn.selected p,
-.intent-btn.selected .text-sm {
-    color: white !important;
-}
-
-/* Formulářové prvky */
 .modern-input {
-    background: rgba(255, 255, 255, 0.9);
-    color: #1f2937;
-    border-color: #d1d5db;
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 0.3s;
 }
-.modern-input::placeholder {
-    color: #9ca3af;
-}
-
+.modern-input::placeholder { color: rgba(255, 255, 255, 0.5); }
 .modern-input:focus {
-    background: white;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    outline: none;
+}
+select.modern-input {
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.2em;
+}
+select.modern-input option {
+    background-color: #1e3a8a;
+    color: white;
 }
 
-/* Přepínač módů */
-.mode-btn {
-    position: relative;
+.nav-btn {
+    background-image: linear-gradient(to right, #3b82f6, #8b5cf6);
+    color: white;
+    font-weight: bold;
+    padding: 12px 28px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: none;
+}
+.nav-btn:hover {
+    box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+}
+#prev-btn {
+    background-image: linear-gradient(to right, #6b7280, #4b5563);
 }
 
-/* Přechody mezi sekcemi formuláře */
+/* Animace a přechody */
 .form-section {
     display: none;
     opacity: 0;
     transition: opacity 0.4s ease-in-out;
 }
-
 .form-section.active {
     display: block;
-    opacity: 1;
+    animation: fadeIn 0.5s forwards;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* AI Chat bubliny */
+/* Nabídkové karty */
+.offer-card {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    color: white;
+}
+.offer-card:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-5px);
+}
+.offer-card.selected {
+    border-color: #60a5fa;
+    background-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+}
+
+/* AI Chat */
 .chat-bubble-ai {
     background: #e5e7eb;
     color: #1f2937;
     border-radius: 20px 20px 20px 5px;
 }
-
 .chat-bubble-user {
     background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
     color: white;
     border-radius: 20px 20px 5px 20px;
+    align-self: flex-end;
 }
 
-/* "Živý" indikátor */
-.live-indicator::before {
-    content: '';
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    background: #10b981;
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* Tooltip */
-.tooltip {
-    position: relative;
-    cursor: help;
-    border-bottom: 1px dotted;
-}
-
-.tooltiptext {
-    visibility: hidden;
-    width: 220px;
-    background-color: #111827;
-    color: white;
-    text-align: center;
-    border-radius: 8px;
-    padding: 8px;
-    position: absolute;
-    z-index: 10;
-    bottom: 130%;
-    left: 50%;
-    margin-left: -110px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    font-size: 0.875rem;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Loading spinner */
+/* Spinner */
 .loading-spinner {
     display: inline-block;
     width: 20px;
@@ -204,25 +187,5 @@ body {
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Nabídkové karty */
-.offer-card {
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.offer-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-.offer-card.selected {
-    border-color: #3b82f6;
-    background-color: white;
-    box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
-}
