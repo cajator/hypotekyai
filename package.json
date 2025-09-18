@@ -1,22 +1,21 @@
 {
-  "name": "hypoteka-ai-pro",
+  "name": "hypoteka-ai",
   "version": "1.0.0",
-  "description": "Profesionální hypoteční kalkulačka s AI asistentem pro český trh.",
+  "description": "Hypotéka AI - Chytrá hypoteční kalkulačka s AI",
   "main": "index.html",
   "scripts": {
-    "dev": "netlify dev",
-    "deploy": "netlify deploy --prod"
+    "start": "live-server --port=3000",
+    "dev": "npm start",
+    "deploy": "netlify deploy --prod",
+    "deploy:preview": "netlify deploy"
   },
-  "keywords": [
-    "hypotéka",
-    "kalkulačka",
-    "AI",
-    "finance",
-    "Česko"
-  ],
-  "author": "Hypotéka AI Team",
-  "license": "UNLICENSED",
+  "author": "Hypotéka AI",
+  "license": "MIT",
   "devDependencies": {
-    "netlify-cli": "^17.23.2"
+    "live-server": "^1.2.2",
+    "netlify-cli": "^17.0.1"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.1.3"
   }
 }
