@@ -1,30 +1,41 @@
+# Konfigurace pro build a nasazení na Netlify
 [build]
+  # Adresář, který se má publikovat
   publish = "."
+  # Adresář se serverless funkcemi
   functions = "netlify/functions"
 
-[build.environment]
-  NODE_VERSION = "18.17.0"
+[functions]
+  node_bundler = "esbuild"
 
+# Nastavení pro lokální vývojový server (netlify dev)
+[dev]
+  framework = "#static"
+  publish = "."
+  port = 8888
+
+# Definice proměnných prostředí
+[build.environment]
+  NODE_VERSION = "18"
+
+# Hlavičky pro zvýšení bezpečnosti
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
-    Content-Security-Policy = "default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://generativelanguage.googleapis.com; img-src 'self' data: https:;"
+    # Content Security Policy - povoluje zdroje jen z důvěryhodných domén
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data:;"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# Pravidla pro cachování statických souborů
 [[headers]]
   for = "*.css"
   [headers.values]
-    Cache-Control = "public, max-age=31536000"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "*.js"
   [headers.values]
-    Cache-Control = "public, max-age=31536000"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+    Cache-Control = "public, max-age=31536000, immutable"
