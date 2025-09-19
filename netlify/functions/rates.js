@@ -1,86 +1,397 @@
-// netlify/functions/rates.js - v10.0 - Final Build
-const ALL_OFFERS = {
-    'offer-1': { id: 'offer-1', rates: { 3: { base: 4.59, min: 4.39, max: 5.09 }, 5: { base: 4.39, min: 4.19, max: 4.89 }, 7: { base: 4.49, min: 4.29, max: 4.99 }, 10: { base: 4.69, min: 4.49, max: 5.19 } }, requirements: { minIncome: 25000, minLoan: 300000, maxLTV: 90 }, bestFor: 'Optimální poměr cena/výkon' },
-    'offer-2': { id: 'offer-2', rates: { 3: { base: 4.49, min: 4.29, max: 4.99 }, 5: { base: 4.29, min: 4.09, max: 4.79 }, 7: { base: 4.39, min: 4.19, max: 4.89 }, 10: { base: 4.59, min: 4.39, max: 5.09 } }, requirements: { minIncome: 20000, minLoan: 200000, maxLTV: 100 }, bestFor: 'Nejlepší sazba na trhu' },
-    'offer-3': { id: 'offer-3', rates: { 3: { base: 4.69, min: 4.49, max: 5.19 }, 5: { base: 4.49, min: 4.29, max: 4.99 }, 7: { base: 4.59, min: 4.39, max: 5.09 }, 10: { base: 4.79, min: 4.59, max: 5.29 } }, requirements: { minIncome: 30000, minLoan: 500000, maxLTV: 85 }, bestFor: 'Ideální pro stabilitu' },
-    'offer-4': { id: 'offer-4', rates: { 3: { base: 4.39, min: 4.19, max: 4.89 }, 5: { base: 4.19, min: 3.99, max: 4.69 }, 7: { base: 4.29, min: 4.09, max: 4.79 }, 10: { base: 4.49, min: 4.29, max: 4.99 } }, requirements: { minIncome: 40000, minLoan: 1000000, maxLTV: 80 }, bestFor: 'Prémiová volba pro náročné' },
-    'offer-5': { id: 'offer-5', rates: { 3: { base: 4.54, min: 4.34, max: 5.04 }, 5: { base: 4.34, min: 4.14, max: 4.84 }, 7: { base: 4.44, min: 4.24, max: 4.94 }, 10: { base: 4.64, min: 4.44, max: 5.14 } }, requirements: { minIncome: 25000, minLoan: 500000, maxLTV: 90 }, bestFor: 'Rychlé online vyřízení' },
-    'offer-6': { id: 'offer-6', rates: { 3: { base: 4.29, min: 4.09, max: 4.79 }, 5: { base: 4.09, min: 3.89, max: 4.59 }, 7: { base: 4.19, min: 3.99, max: 4.69 }, 10: { base: 4.39, min: 4.19, max: 4.89 } }, requirements: { minIncome: 25000, minLoan: 300000, maxLTV: 90 }, bestFor: 'Specialisté na hypotéky' }
-};
+// netlify/functions/rates.js
+// Serverless funkce pro poskytování aktuálních úrokových sazeb a výpočty
 
-const calculateMonthlyPayment = (p, r, t) => (p * (r/100/12) * Math.pow(1 + (r/100/12), t*12)) / (Math.pow(1 + (r/100/12), t*12) - 1);
-
-const handler = async (event) => {
-    const headers = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
-    if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers };
-
-    try {
-        const params = event.queryStringParameters;
-        const propertyValue = parseInt(params.propertyValue) || 0;
-        const ownResources = parseInt(params.ownResources) || 0;
-        const income = parseInt(params.income) || 0;
-        const liabilities = parseInt(params.liabilities) || 0;
-        const fixation = parseInt(params.fixation) || 5;
-        const term = parseInt(params.loanTerm) || 25;
-        const age = parseInt(params.age) || 35;
-        
-        const loanAmount = propertyValue - ownResources;
-
-        if (loanAmount <= 0 || propertyValue <= 0 || income <=0) {
-            return { statusCode: 200, headers, body: JSON.stringify({ offers: [], approvability: 0 }) };
+// Databáze bank a sazeb
+const BANKS_DATA = {
+    'ceska-sporitelna': {
+        id: 'ceska-sporitelna',
+        name: 'Česká spořitelna',
+        logo: '🏦',
+        color: '#0066CC',
+        contact: {
+            phone: '800 207 207',
+            web: 'www.csas.cz'
+        },
+        rates: {
+            1: { base: 5.29, min: 5.09, max: 5.79 },
+            3: { base: 4.59, min: 4.39, max: 5.09 },
+            5: { base: 4.39, min: 4.19, max: 4.89 },
+            7: { base: 4.49, min: 4.29, max: 4.99 },
+            10: { base: 4.69, min: 4.49, max: 5.19 }
+        },
+        requirements: {
+            minIncome: 25000,
+            minLoan: 300000,
+            maxLoan: 20000000,
+            maxLTV: 90,
+            maxDSTI: 50
         }
-
-        const ltv = (loanAmount / propertyValue) * 100;
-
-        const qualifiedOffers = Object.values(ALL_OFFERS)
-            .filter(offer => {
-                const req = offer.requirements;
-                return ltv <= req.maxLTV && loanAmount >= req.minLoan && income >= req.minIncome && offer.rates[fixation];
-            })
-            .map(offer => {
-                const rateInfo = offer.rates[fixation];
-                let calculatedRate = rateInfo.base;
-                if (ltv <= 70) calculatedRate = rateInfo.min;
-                else if (ltv > 80 && ltv <= 90) calculatedRate = Math.min(rateInfo.max, rateInfo.base + 0.3);
-                else if (ltv > 90) calculatedRate = rateInfo.max;
-
-                const monthlyPayment = calculateMonthlyPayment(loanAmount, calculatedRate, term);
-                const dsti = ((monthlyPayment + liabilities) / income) * 100;
-                if (dsti > 50) return null;
-
-                return {
-                    id: offer.id,
-                    rate: parseFloat(calculatedRate.toFixed(2)),
-                    bestFor: offer.bestFor,
-                    monthlyPayment: Math.round(monthlyPayment)
-                };
-            })
-            .filter(Boolean)
-            .sort((a, b) => a.rate - b.rate);
-            
-        // Simple approvability score
-        let approvability = 50;
-        if (ltv < 80) approvability += 20; else if (ltv > 90) approvability -= 15;
-        if (ltv < 60) approvability += 5;
-        const dsti = qualifiedOffers.length > 0 ? ((qualifiedOffers[0].monthlyPayment + liabilities) / income) * 100 : 100;
-        if (dsti < 40) approvability += 20; else if (dsti > 45) approvability -=15;
-        if (dsti < 30) approvability += 5;
-        if (age < 40 && age > 25) approvability += 5;
-        approvability = Math.min(99, Math.max(10, Math.round(approvability)));
-
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-                offers: qualifiedOffers.slice(0, 3),
-                approvability: qualifiedOffers.length > 0 ? approvability : 0
-            }),
-        };
-    } catch (error) {
-        console.error('Rates function error:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal server error' }) };
+    },
+    'csob': {
+        id: 'csob',
+        name: 'ČSOB',
+        logo: '🏛️',
+        color: '#E60000',
+        contact: {
+            phone: '800 300 300',
+            web: 'www.csob.cz'
+        },
+        rates: {
+            1: { base: 5.19, min: 4.99, max: 5.69 },
+            3: { base: 4.49, min: 4.29, max: 4.99 },
+            5: { base: 4.29, min: 4.09, max: 4.79 },
+            7: { base: 4.39, min: 4.19, max: 4.89 },
+            10: { base: 4.59, min: 4.39, max: 5.09 }
+        },
+        requirements: {
+            minIncome: 20000,
+            minLoan: 200000,
+            maxLoan: 25000000,
+            maxLTV: 100,
+            maxDSTI: 50
+        }
+    },
+    'kb': {
+        id: 'kb',
+        name: 'Komerční banka',
+        logo: '🏢',
+        color: '#F37021',
+        contact: {
+            phone: '955 559 559',
+            web: 'www.kb.cz'
+        },
+        rates: {
+            1: { base: 5.39, min: 5.19, max: 5.89 },
+            3: { base: 4.69, min: 4.49, max: 5.19 },
+            5: { base: 4.49, min: 4.29, max: 4.99 },
+            7: { base: 4.59, min: 4.39, max: 5.09 },
+            10: { base: 4.79, min: 4.59, max: 5.29 }
+        },
+        requirements: {
+            minIncome: 30000,
+            minLoan: 500000,
+            maxLoan: 30000000,
+            maxLTV: 85,
+            maxDSTI: 45
+        }
+    },
+    'unicredit': {
+        id: 'unicredit',
+        name: 'UniCredit Bank',
+        logo: '🏪',
+        color: '#FF7A00',
+        contact: {
+            phone: '955 960 960',
+            web: 'www.unicreditbank.cz'
+        },
+        rates: {
+            1: { base: 5.09, min: 4.89, max: 5.59 },
+            3: { base: 4.39, min: 4.19, max: 4.89 },
+            5: { base: 4.19, min: 3.99, max: 4.69 },
+            7: { base: 4.29, min: 4.09, max: 4.79 },
+            10: { base: 4.49, min: 4.29, max: 4.99 }
+        },
+        requirements: {
+            minIncome: 40000,
+            minLoan: 1000000,
+            maxLoan: 15000000,
+            maxLTV: 80,
+            maxDSTI: 40
+        }
+    },
+    'raiffeisen': {
+        id: 'raiffeisen',
+        name: 'Raiffeisenbank',
+        logo: '🏗️',
+        color: '#FFE500',
+        contact: {
+            phone: '800 900 900',
+            web: 'www.rb.cz'
+        },
+        rates: {
+            1: { base: 5.24, min: 5.04, max: 5.74 },
+            3: { base: 4.54, min: 4.34, max: 5.04 },
+            5: { base: 4.34, min: 4.14, max: 4.84 },
+            7: { base: 4.44, min: 4.24, max: 4.94 },
+            10: { base: 4.64, min: 4.44, max: 5.14 }
+        },
+        requirements: {
+            minIncome: 25000,
+            minLoan: 500000,
+            maxLoan: 20000000,
+            maxLTV: 90,
+            maxDSTI: 50
+        }
+    },
+    'hypotecni-banka': {
+        id: 'hypotecni-banka',
+        name: 'Hypoteční banka',
+        logo: '🏠',
+        color: '#0033A0',
+        contact: {
+            phone: '800 100 111',
+            web: 'www.hypotecnibanka.cz'
+        },
+        rates: {
+            1: { base: 4.99, min: 4.79, max: 5.49 },
+            3: { base: 4.29, min: 4.09, max: 4.79 },
+            5: { base: 4.09, min: 3.89, max: 4.59 },
+            7: { base: 4.19, min: 3.99, max: 4.69 },
+            10: { base: 4.39, min: 4.19, max: 4.89 }
+        },
+        requirements: {
+            minIncome: 25000,
+            minLoan: 300000,
+            maxLoan: 30000000,
+            maxLTV: 90,
+            maxDSTI: 50
+        }
     }
 };
 
-export { handler };
+// Hlavní handler
+export default async (request, context) => {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+    };
 
+    // Handle preflight
+    if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 200, headers });
+    }
+
+    try {
+        const url = new URL(request.url);
+        const params = url.searchParams;
+        
+        // Různé endpointy
+        const endpoint = params.get('endpoint') || 'rates';
+        
+        switch(endpoint) {
+            case 'rates':
+                return getRates(params, headers);
+            
+            case 'calculate':
+                return calculateOffers(params, headers);
+            
+            case 'banks':
+                return getBanks(headers);
+            
+            case 'best-offers':
+                return getBestOffers(params, headers);
+            
+            default:
+                return getRates(params, headers);
+        }
+        
+    } catch (error) {
+        console.error('Rates API error:', error);
+        return new Response(JSON.stringify({
+            error: 'Internal server error',
+            message: error.message
+        }), { 
+            status: 500, 
+            headers 
+        });
+    }
+};
+
+// Získat aktuální sazby
+function getRates(params, headers) {
+    const bankId = params.get('bank');
+    const fixation = params.get('fixation');
+    
+    let result = {
+        lastUpdated: new Date().toISOString(),
+        rates: {}
+    };
+    
+    if (bankId && BANKS_DATA[bankId]) {
+        // Konkrétní banka
+        const bank = BANKS_DATA[bankId];
+        if (fixation && bank.rates[fixation]) {
+            result.rates = bank.rates[fixation];
+        } else {
+            result.rates = bank.rates;
+        }
+    } else {
+        // Všechny banky
+        Object.keys(BANKS_DATA).forEach(id => {
+            const bank = BANKS_DATA[id];
+            result.rates[id] = {
+                name: bank.name,
+                rates: fixation ? bank.rates[fixation] : bank.rates
+            };
+        });
+    }
+    
+    return new Response(JSON.stringify(result), { 
+        status: 200, 
+        headers 
+    });
+}
+
+// Vypočítat nabídky
+function calculateOffers(params, headers) {
+    const loanAmount = parseInt(params.get('amount')) || 0;
+    const propertyValue = parseInt(params.get('value')) || 0;
+    const term = parseInt(params.get('term')) || 25;
+    const fixation = parseInt(params.get('fixation')) || 5;
+    const income = parseInt(params.get('income')) || 0;
+    
+    if (!loanAmount || !propertyValue) {
+        return new Response(JSON.stringify({
+            error: 'Missing required parameters'
+        }), { 
+            status: 400, 
+            headers 
+        });
+    }
+    
+    const ltv = (loanAmount / propertyValue) * 100;
+    const offers = [];
+    
+    Object.values(BANKS_DATA).forEach(bank => {
+        // Kontrola požadavků banky
+        if (ltv > bank.requirements.maxLTV) return;
+        if (loanAmount < bank.requirements.minLoan) return;
+        if (loanAmount > bank.requirements.maxLoan) return;
+        if (income && income < bank.requirements.minIncome) return;
+        
+        // Získat sazbu
+        const rateInfo = bank.rates[fixation];
+        if (!rateInfo) return;
+        
+        // Výpočet sazby podle LTV a bonity
+        let rate = rateInfo.base;
+        
+        // LTV adjustment
+        if (ltv < 60) {
+            rate = rateInfo.min;
+        } else if (ltv > 80) {
+            rate = Math.min(rateInfo.max, rate + 0.3);
+        }
+        
+        // Income adjustment
+        if (income > 100000) {
+            rate -= 0.1;
+        } else if (income < 30000) {
+            rate += 0.1;
+        }
+        
+        // Ensure rate is within bounds
+        rate = Math.max(rateInfo.min, Math.min(rateInfo.max, rate));
+        
+        // Výpočet splátky
+        const monthlyRate = rate / 100 / 12;
+        const n = term * 12;
+        const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, n)) / 
+                               (Math.pow(1 + monthlyRate, n) - 1);
+        
+        // DSTI výpočet
+        const dsti = income ? (monthlyPayment / income * 100) : null;
+        
+        // Doporučení
+        let bestFor = '';
+        if (rate === rateInfo.min) {
+            bestFor = 'Nejnižší sazba';
+        } else if (ltv <= 70) {
+            bestFor = 'Nízké LTV';
+        } else if (income > 80000) {
+            bestFor = 'Vysoké příjmy';
+        } else if (bank.requirements.maxLTV === 100) {
+            bestFor = '100% financování';
+        } else {
+            bestFor = 'Standardní hypotéka';
+        }
+        
+        offers.push({
+            bankId: bank.id,
+            bankName: bank.name,
+            bankLogo: bank.logo,
+            bankColor: bank.color,
+            rate: parseFloat(rate.toFixed(2)),
+            monthlyPayment: Math.round(monthlyPayment),
+            totalPaid: Math.round(monthlyPayment * n),
+            totalInterest: Math.round(monthlyPayment * n - loanAmount),
+            ltv: ltv.toFixed(1),
+            dsti: dsti ? dsti.toFixed(1) : null,
+            approved: !dsti || dsti <= bank.requirements.maxDSTI,
+            contact: bank.contact,
+            bestFor: bestFor
+        });
+    });
+    
+    // Seřadit podle sazby
+    offers.sort((a, b) => a.rate - b.rate);
+    
+    return new Response(JSON.stringify({
+        parameters: {
+            loanAmount,
+            propertyValue,
+            ltv: ltv.toFixed(1),
+            term,
+            fixation,
+            income
+        },
+        offers: offers.slice(0, 5), // Top 5 nabídek
+        bestOffer: offers[0],
+        totalOffers: offers.length
+    }), { 
+        status: 200, 
+        headers 
+    });
+}
+
+// Seznam bank
+function getBanks(headers) {
+    const banks = Object.values(BANKS_DATA).map(bank => ({
+        id: bank.id,
+        name: bank.name,
+        logo: bank.logo,
+        color: bank.color,
+        contact: bank.contact,
+        requirements: bank.requirements
+    }));
+    
+    return new Response(JSON.stringify({
+        banks,
+        total: banks.length,
+        lastUpdated: new Date().toISOString()
+    }), { 
+        status: 200, 
+        headers 
+    });
+}
+
+// Nejlepší nabídky
+function getBestOffers(params, headers) {
+    const fixation = parseInt(params.get('fixation')) || 5;
+    const offers = [];
+    
+    Object.values(BANKS_DATA).forEach(bank => {
+        const rateInfo = bank.rates[fixation];
+        if (!rateInfo) return;
+        
+        offers.push({
+            bankName: bank.name,
+            rate: rateInfo.min,
+            contact: bank.contact
+        });
+    });
+    
+    offers.sort((a, b) => a.rate - b.rate);
+    
+    return new Response(JSON.stringify({
+        fixation,
+        topOffers: offers.slice(0, 3),
+        lowestRate: offers[0]?.rate || null,
+        averageRate: (offers.reduce((sum, o) => sum + o.rate, 0) / offers.length).toFixed(2)
+    }), { 
+        status: 200, 
+        headers 
+    });
+}
