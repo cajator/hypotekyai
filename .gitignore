@@ -1,14 +1,17 @@
 Dependencies
 
-node_modules
+node_modules/
 Environment variables
 
 .env
-.env.local
-Netlify build directory
+.env.*
+IDE files & OS files
 
-.netlify
-OS generated files
-
+.vscode/
+.idea/
+*.swp
 .DS_Store
 Thumbs.db
+Netlify dev files
+
+.netlify

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceAI Pro - Profesionální hypoteční analýza</title>
+    <title>Hypotéka AI - Profesionální hypoteční analýza</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,15 +17,16 @@
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <span class="text-2xl">💡</span>
-                <h1 class="text-xl font-bold text-gray-800">FinanceAI Pro</h1>
+                <h1 class="text-xl font-bold text-gray-800">Hypotéka AI</h1>
             </div>
             <div class="hidden md:flex items-center space-x-6 text-sm font-semibold">
                 <a href="#kalkulacka" class="text-gray-600 hover:text-blue-600 transition-colors">Kalkulačka</a>
                 <a href="#o-nas" class="text-gray-600 hover:text-blue-600 transition-colors">O nás</a>
+                <a href="#partneri" class="text-gray-600 hover:text-blue-600 transition-colors">Partneři</a>
                 <a href="#kontakt" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-transform hover:scale-105">Kontaktovat specialistu</a>
             </div>
             <div class="md:hidden">
-                <button class="text-gray-600 focus:outline-none">
+                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
             </div>
@@ -36,8 +37,8 @@
     <div class="bg-blue-600 text-white text-sm py-2">
         <div class="container mx-auto px-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <span>✅ Zabezpečeno SSL</span>
-                <span>✅ GDPR Compliant</span>
+                <span class="hidden sm:inline">✅ Zabezpečeno SSL</span>
+                <span class="hidden sm:inline">✅ GDPR Compliant</span>
             </div>
             <div class="flex items-center space-x-2 animate-pulse">
                 <span class="relative flex h-3 w-3">
@@ -54,7 +55,6 @@
         <section class="text-center mb-16">
             <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Profesionální hypoteční analýza</h2>
             <p class="text-lg text-gray-600">Metodika 23 bank | Aktuální sazby | Scoring v reálném čase</p>
-            <div class="mt-4 text-sm text-gray-500">Spolupracujeme s: ČSOB, KB, ČS, Raiffeisen, UniCredit +18 dalších</div>
         </section>
 
         <!-- Mode Selection -->
@@ -62,85 +62,56 @@
             <div class="mode-card" data-mode="express">
                 <div class="badge badge-yellow">Rychlé</div>
                 <h3 class="font-bold text-xl mb-2">Expresní scoring</h3>
-                <p class="text-gray-600 text-sm mb-4">Okamžitý výpočet napříč všemi bankami.</p>
-                <ul class="text-sm space-y-2 text-left">
-                    <li class="flex items-center"><span class="text-green-500 mr-2">✔</span> Porovnání 23 bank</li>
-                    <li class="flex items-center"><span class="text-green-500 mr-2">✔</span> Aktuální sazby</li>
-                    <li class="flex items-center"><span class="text-green-500 mr-2">✔</span> Bonusy a slevy</li>
-                </ul>
+                <p class="text-gray-600 text-sm mb-4">Okamžitý výpočet napříč bankami.</p>
             </div>
             <div class="mode-card active" data-mode="guided">
                 <div class="badge badge-blue">Doporučeno</div>
                 <h3 class="font-bold text-xl mb-2">Profesionální analýza</h3>
                 <p class="text-gray-600 text-sm mb-4">Komplexní scoring podle bankovních metodik.</p>
-                 <ul class="text-sm space-y-2 text-left">
-                    <li class="flex items-center"><span class="text-green-500 mr-2">✔</span> Stress test ČNB</li>
-                    <li class="flex items-center"><span class="text-green-500 mr-2">✔</span> Započitatelnost příjmů</li>
-                    <li class="flex items-center"><span class="text-green-500 mr-2">✔</span> Optimalizace podmínek</li>
-                </ul>
             </div>
             <div class="mode-card mode-card-dark" data-mode="ai">
                 <div class="badge badge-purple">Premium</div>
                 <h3 class="font-bold text-xl mb-2 text-white">AI Hypoteční stratég</h3>
                 <p class="text-gray-300 text-sm mb-4">Umělá inteligence trénovaná na 50 000+ případech.</p>
-                 <ul class="text-sm space-y-2 text-left text-gray-300">
-                    <li class="flex items-center"><span class="text-yellow-400 mr-2">✔</span> Predikce schválení 97%</li>
-                    <li class="flex items-center"><span class="text-yellow-400 mr-2">✔</span> Strategie refinancování</li>
-                    <li class="flex items-center"><span class="text-yellow-400 mr-2">✔</span> 30denní monitoring</li>
-                </ul>
             </div>
         </section>
 
         <!-- Calculator/AI Content -->
-        <section id="content-container" class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border">
+        <section id="content-container" class="bg-white p-6 md:p-12 rounded-2xl shadow-xl border min-h-[500px]">
             <!-- Content will be injected here by script.js -->
         </section>
 
-        <!-- Key Metrics -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center my-16">
-            <div>
-                <p class="text-4xl font-bold text-blue-600 mb-1">8.4 mld Kč</p>
-                <p class="text-gray-500">Zprostředkováno</p>
-            </div>
-            <div>
-                <p class="text-4xl font-bold text-blue-600 mb-1">286 000 Kč</p>
-                <p class="text-gray-500">Průměrná úspora</p>
-            </div>
-             <div>
-                <p class="text-4xl font-bold text-blue-600 mb-1">12 847</p>
-                <p class="text-gray-500">Spokojených klientů</p>
-            </div>
-            <div>
-                <p class="text-4xl font-bold text-blue-600 mb-1">4.9/5.0</p>
-                <p class="text-gray-500">Hodnocení</p>
-            </div>
-        </section>
-        
-        <!-- Partners -->
-        <section id="o-nas" class="text-center my-16">
-            <h3 class="text-2xl font-bold mb-8 text-gray-800">Banky a úvěrové společnosti</h3>
-            <div class="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-200px),transparent_100%)]">
-                <ul class="flex items-center justify-center md:justify-start [&_li]:mx-8 [&_img]:max-w-none animate-infinite-scroll">
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=ČSOB" alt="ČSOB"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=KB" alt="Komerční banka"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=Česká+spořitelna" alt="Česká spořitelna"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=Raiffeisen" alt="Raiffeisenbank"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=UniCredit" alt="UniCredit Bank"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=mBank" alt="mBank"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=Fio+Banka" alt="Fio Banka"></li>
-                </ul>
-                <ul class="flex items-center justify-center md:justify-start [&_li]:mx-8 [&_img]:max-w-none animate-infinite-scroll" aria-hidden="true">
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=ČSOB" alt="ČSOB"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=KB" alt="Komerční banka"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=Česká+spořitelna" alt="Česká spořitelna"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=Raiffeisen" alt="Raiffeisenbank"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=UniCredit" alt="UniCredit Bank"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=mBank" alt="mBank"></li>
-                    <li><img src="https://placehold.co/120x40/f0f0f0/333?text=Fio+Banka" alt="Fio Banka"></li>
-                </ul>
+        <!-- About Us -->
+        <section id="o-nas" class="my-24">
+             <div class="text-center">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Proč Hypotéka AI?</h2>
+                <p class="text-gray-600 max-w-3xl mx-auto">Nejsme jen další srovnávač. Jsme váš partner na cestě k vlastnímu bydlení. Kombinujeme sílu umělé inteligence s empatií a zkušenostmi našich certifikovaných specialistů. Díky tomu vám dokážeme zajistit nejen nejlepší sazbu, ale i hladký a bezstarostný průběh celého procesu.</p>
             </div>
         </section>
 
+        <!-- Partners -->
+        <section id="partneri" class="my-24">
+            <h3 class="text-2xl font-bold mb-8 text-gray-800 text-center">Naši partneři</h3>
+            <div class="grid grid-cols-4 md:grid-cols-8 gap-8 items-center">
+                <!-- 16 Bank logos -->
+                <img src="https://www.penize.cz/images/f/5/22532-cs-logo.svg" alt="Česká spořitelna" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22533-csob-logo.svg" alt="ČSOB" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22535-kb-logo.svg" alt="Komerční banka" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22543-rb-logo.svg" alt="Raiffeisenbank" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22547-unicredit-logo.svg" alt="UniCredit Bank" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22539-moneta-logo.svg" alt="Moneta" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22538-mbank-logo.svg" alt="mBank" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22534-fio-logo.svg" alt="Fio Banka" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22531-airbank-logo.svg" alt="Air Bank" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22537-maxbanka-logo.svg" alt="Max Banka" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22546-trinity-logo.svg" alt="Trinity Bank" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22536-creditas-logo.svg" alt="Banka Creditas" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22548-cmss-logo.svg" alt="ČMSS" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22550-rsts-logo.svg" alt="Raiffeisen Stavební Spořitelna" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22549-sscs-logo.svg" alt="Stavební spořitelna České spořitelny" class="partner-logo">
+                <img src="https://www.penize.cz/images/f/5/22551-moneta-ss-logo.svg" alt="Moneta Stavební Spořitelna" class="partner-logo">
+            </div>
+        </section>
     </main>
 
     <!-- Footer -->
@@ -148,40 +119,27 @@
         <div class="container mx-auto px-6 py-12 text-center">
             <h3 class="text-3xl font-bold mb-4">Máte dotazy nebo chcete individuální nabídku?</h3>
             <p class="text-gray-300 mb-8">Náš tým hypotečních specialistů je tu pro vás.</p>
-            <a href="#" class="bg-blue-600 text-white font-bold px-8 py-4 rounded-lg hover:bg-blue-700 transition-transform hover:scale-105 inline-block">Domluvit si konzultaci zdarma</a>
-            <p class="text-sm text-gray-500 mt-12">&copy; 2025 FinanceAI Pro. Všechna práva vyhrazena. Výpočty jsou orientační.</p>
+            <a href="mailto:info@hypotekai.cz" class="bg-blue-600 text-white font-bold px-8 py-4 rounded-lg hover:bg-blue-700 transition-transform hover:scale-105 inline-block">Domluvit si konzultaci zdarma</a>
+            <p class="text-sm text-gray-500 mt-12">&copy; 2025 Hypotéka AI. Všechna práva vyhrazena. Výpočty jsou orientační.</p>
         </div>
     </footer>
 
     <!-- HTML Templates for JS -->
-    <template id="template-guided">
-        <!-- Guided Mode HTML content -->
-        <div class="text-center mb-8">
-            <h2 class="text-3xl font-bold">Profesionální analýza</h2>
-            <p class="text-gray-600">Provedeme vás krok za krokem k nejlepší nabídce.</p>
-        </div>
-        <!-- Timeline will be injected here -->
-        <!-- Form section will be injected here -->
-        <!-- Navigation will be injected here -->
-    </template>
-
     <template id="template-express">
-        <!-- Express Mode HTML content -->
-         <div class="text-center mb-8">
+        <div class="text-center mb-8">
             <h2 class="text-3xl font-bold">Expresní scoring</h2>
             <p class="text-gray-600">Zadejte základní údaje a získejte okamžitý přehled.</p>
         </div>
         <div id="express-form-container"></div>
-        <div id="express-analysis-container" class="mt-8"></div>
+        <div id="express-analysis-container" class="mt-8 min-h-[200px]"></div>
     </template>
 
     <template id="template-ai">
-        <!-- AI Mode HTML content -->
         <div class="text-center mb-8">
             <h2 class="text-3xl font-bold">AI Hypoteční stratég</h2>
             <p class="text-gray-600">Zeptejte se na cokoliv. Naše AI vám poradí.</p>
         </div>
-        <div class="bg-gray-100 rounded-lg overflow-hidden flex flex-col h-[70vh]">
+        <div class="bg-gray-100 rounded-lg overflow-hidden flex flex-col h-[70vh] max-h-[600px]">
             <div id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-4"></div>
             <div id="ai-suggestions" class="p-4 border-t border-b border-gray-200"></div>
             <div class="p-4 bg-white">
@@ -192,8 +150,7 @@
             </div>
         </div>
     </template>
-
-
+    
     <script src="script.js"></script>
 </body>
 </html>

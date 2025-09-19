@@ -1,19 +1,16 @@
 {
-  "name": "finance-ai-calculator",
-  "version": "6.0.0",
-  "description": "Intelligent mortgage calculator with AI assistant.",
+  "name": "hypoteka-ai",
+  "version": "1.0.0",
+  "description": "Hypotéka AI - Profesionální hypoteční analýza",
   "main": "index.html",
   "scripts": {
     "start": "netlify dev",
-    "deploy": "netlify deploy --prod"
+    "dev": "netlify dev"
   },
-  "author": "FinanceAI Team",
-  "license": "UNLICENSED",
+  "author": "Hypotéka AI",
+  "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.7.1"
-  },
-  "devDependencies": {
-    "netlify-cli": "^17.16.2"
   }
 }
 
