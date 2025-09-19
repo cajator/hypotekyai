@@ -1,58 +1,259 @@
-/* Hypotéka AI - Vizuální styl v5.1 */
+/* style.css - Minimální styly pro Hypotéka AI */
+/* Verze 2.0 - Pouze doplňky k Tailwind CSS */
+
+/* ===== BASE ===== */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
+
+/* ===== GRADIENT BACKGROUND ===== */
 .gradient-bg {
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b0764 100%);
-    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
+
+/* ===== GLASSMORPHISM ===== */
 .glass-card {
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.glass-card-inner {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
-/* Timeline */
-.timeline-line { position: absolute; top: 50%; left: 0; width: 100%; transform: translateY(-50%); height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
-#timeline-progress { height: 100%; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); transition: width 0.5s ease-in-out; border-radius: 2px; }
-.timeline-step { width: 25%; text-align: center; }
-.timeline-step .step-circle { margin: auto; width: 3rem; height: 3rem; border-radius: 50%; border-width: 2px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.25rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; border-color: #9ca3af; background-color: #fff; color: #9ca3af; }
-.timeline-step p { margin-top: 0.75rem; font-size: 0.875rem; color: #d1d5db; transition: all 0.3s ease; }
-.timeline-step.active .step-circle { border-color: #3b82f6; background-color: #3b82f6; color: white; transform: scale(1.1); }
-.timeline-step.completed .step-circle { border-color: #10b981; background-color: #10b981; color: white; }
-.timeline-step.active p { color: white; font-weight: 600; }
+.metric-card {
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s;
+}
 
-/* Formulář */
-.form-title { font-size: 1.875rem; font-weight: bold; margin-bottom: 2rem; text-align: center; color: white; }
-.form-label { display: block; font-size: 1rem; font-weight: 500; color: white; margin-bottom: 0.5rem; }
-.form-section { display: none; }
-.form-section.active { display: block; animation: fadeIn 0.5s forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.modern-input { width: 100%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 12px 16px; border-radius: 8px; transition: all 0.3s; }
-.modern-input::placeholder { color: rgba(255, 255, 255, 0.5); }
-.modern-input:focus { background: rgba(255, 255, 255, 0.2); border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); outline: none; }
-select.modern-input { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-position: right 1rem center; background-repeat: no-repeat; background-size: 1.2em; }
-select.modern-input option { background-color: #1e3a8a; color: white; }
+.metric-card:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
+}
 
-/* Tlačítka */
-.nav-btn { background-image: linear-gradient(to right, #3b82f6, #8b5cf6); color: white; font-weight: bold; padding: 12px 28px; border-radius: 8px; transition: all 0.3s ease; border: none; cursor: pointer; }
-.nav-btn:hover { box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); transform: translateY(-2px); }
-#prev-btn { background-image: linear-gradient(to right, #6b7280, #4b5563); }
-.submit-btn { width: 100%; background-image: linear-gradient(to right, #10b981, #34d399); color: white; font-weight: bold; padding: 16px; border-radius: 8px; transition: all 0.3s ease; border: none; font-size: 1.125rem; cursor: pointer; }
-.submit-btn:hover { box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
-.mode-btn { transition: all 0.3s; }
+/* ===== TIMELINE ===== */
+.timeline-step {
+    cursor: pointer;
+    transition: all 0.3s;
+}
 
-/* Nabídky a AI Chat */
-.offer-card { background-color: rgba(255, 255, 255, 0.1); border: 2px solid transparent; transition: all 0.3s ease; color: white; cursor: pointer; }
-.offer-card:hover { background-color: rgba(255, 255, 255, 0.2); transform: translateY(-5px); }
-.offer-card.selected { border-color: #60a5fa; background-color: rgba(255, 255, 255, 0.25); box-shadow: 0 0 25px rgba(59, 130, 246, 0.3); }
-.chat-bubble-ai { background: #e5e7eb; color: #1f2937; border-radius: 20px 20px 20px 5px; padding: 12px; max-width: 80%; width: fit-content; }
-.chat-bubble-user { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; border-radius: 20px 20px 5px 20px; padding: 12px; max-width: 80%; width: fit-content; align-self: flex-end; }
-.loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.timeline-step.active {
+    transform: scale(1.05);
+}
 
+.timeline-line {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.timeline-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+    transition: width 0.5s ease;
+}
+
+.step-circle {
+    transition: all 0.3s;
+}
+
+/* ===== INTENT BUTTONS ===== */
+.intent-btn {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.intent-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.intent-btn.selected {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+
+.intent-btn.selected p,
+.intent-btn.selected span {
+    color: white !important;
+}
+
+/* ===== INPUTS ===== */
+.modern-input {
+    transition: all 0.3s;
+}
+
+.modern-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ===== MODE SWITCHER ===== */
+.mode-btn {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+/* ===== CHAT ===== */
+.chat-bubble {
+    animation: slideIn 0.3s ease;
+}
+
+.chat-bubble-user {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.chat-bubble-ai {
+    background: white;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== FORM SECTIONS ===== */
+.form-section {
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ===== LIVE INDICATOR ===== */
+.live-indicator::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ===== TOOLTIP ===== */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #111827;
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ===== LOADING ===== */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== TYPING INDICATOR ===== */
+.typing-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #6b7280;
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .glass-card {
+        padding: 1rem;
+    }
+    
+    .chat-bubble {
+        max-width: 90%;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .intent-btn {
+        min-height: 120px;
+        padding: 0.75rem;
+    }
+    
+    .intent-btn span {
+        font-size: 1.5rem;
+    }
+}
+
+/* ===== PRINT ===== */
+@media print {
+    .no-print,
+    button,
+    .chat-window,
+    .mode-btn {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+}
