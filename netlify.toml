@@ -1,31 +1,33 @@
-# Konfigurace pro build a nasazení na Netlify v5.1
+# Netlify Configuration - v6.0 - Final
+
 [build]
-  publish = "."
+  # Directory with the serverless functions.
   functions = "netlify/functions"
-
-[functions]
-  node_bundler = "esbuild"
-
-[dev]
-  framework = "#static"
+  # The directory to publish, which is the root in this case.
   publish = "."
-  port = 8888
 
+# Production environment settings
 [build.environment]
   NODE_VERSION = "18"
 
-# Přesměrování pro jednodušší volání API z frontendu
-# /api/chat -> /.netlify/functions/chat
+# Serverless function configuration
+[functions]
+  node_bundler = "esbuild"
+
+# This rule proxies requests from your site to the corresponding Netlify function.
+# This avoids CORS issues and hides the .netlify/functions path from the user.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Bezpečnostní hlavičky
+# Security and caching headers for the site.
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
-    # Opravená a funkční Content-Security-Policy
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:;"
+    X-Content-Type-Options = "nosniff"
+    # Basic Content Security Policy. Allows scripts from self, TailwindCSS, and Chart.js.
+    # Allows API calls to self (Netlify functions via /api/ path).
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self';"
 

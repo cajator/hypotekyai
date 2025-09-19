@@ -1,20 +1,19 @@
 {
-  "name": "hypoteka-ai-v5",
-  "version": "5.1.0",
-  "description": "Unikátní nástroj pro generování leadů na hypotéky.",
+  "name": "finance-ai-calculator",
+  "version": "6.0.0",
+  "description": "Intelligent mortgage calculator with AI assistant.",
   "main": "index.html",
-  "type": "module",
   "scripts": {
     "start": "netlify dev",
-    "dev": "netlify dev"
+    "deploy": "netlify deploy --prod"
   },
-  "author": "AI & Professional Team",
-  "license": "MIT",
+  "author": "FinanceAI Team",
+  "license": "UNLICENSED",
   "dependencies": {
-    "@google/generative-ai": "^0.14.0"
+    "@google/generative-ai": "^0.7.1"
   },
   "devDependencies": {
-    "netlify-cli": "^17.0.0"
+    "netlify-cli": "^17.16.2"
   }
 }
 
