@@ -1,33 +1,39 @@
-# Netlify Configuration - v6.0 - Final
-
 [build]
-  # Directory with the serverless functions.
-  functions = "netlify/functions"
-  # The directory to publish, which is the root in this case.
   publish = "."
+  functions = "netlify/functions"
 
-# Production environment settings
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "18.17.0"
 
-# Serverless function configuration
-[functions]
-  node_bundler = "esbuild"
-
-# This rule proxies requests from your site to the corresponding Netlify function.
-# This avoids CORS issues and hides the .netlify/functions path from the user.
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# Security and caching headers for the site.
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
-    # Basic Content Security Policy. Allows scripts from self, TailwindCSS, and Chart.js.
-    # Allows API calls to self (Netlify functions via /api/ path).
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self';"
+    X-XSS-Protection = "1; mode=block"
+    Content-Security-Policy = "default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://generativelanguage.googleapis.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net;"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
 
+# Cache control for static assets
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Redirects
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
