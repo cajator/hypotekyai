@@ -1,21 +1,20 @@
 {
-  "name": "hypoteka-ai",
-  "version": "1.0.0",
-  "description": "Hypotéka AI - Chytrá hypoteční kalkulačka s AI",
+  "name": "hypoteka-ai-v5",
+  "version": "5.1.0",
+  "description": "Unikátní nástroj pro generování leadů na hypotéky.",
   "main": "index.html",
+  "type": "module",
   "scripts": {
-    "start": "npx live-server --port=3000",
-    "dev": "npm start",
-    "deploy": "netlify deploy --prod",
-    "deploy:preview": "netlify deploy"
+    "start": "netlify dev",
+    "dev": "netlify dev"
   },
-  "author": "Hypotéka AI",
+  "author": "AI & Professional Team",
   "license": "MIT",
-  "devDependencies": {
-    "live-server": "^1.2.2",
-    "netlify-cli": "^17.0.1"
-  },
   "dependencies": {
-    "@google/generative-ai": "^0.1.3"
+    "@google/generative-ai": "^0.14.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
   }
 }
+

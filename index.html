@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hypotéka AI - Chytrá kalkulačka s AI poradcem</title>
-    <!-- Opravený odkaz na CSS soubor -->
+    <title>Hypotéka AI - Váš partner pro financování bydlení</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Tailwind CSS - klíčový pro vzhled -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js pro grafy -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏡</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💡</text></svg>">
 </head>
 <body class="gradient-bg text-gray-800 antialiased">
 
@@ -21,33 +17,13 @@
         <header class="text-center mb-8">
             <h1 class="text-5xl md:text-7xl font-bold text-white mb-4">
                 <span class="bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
-                    Hypotéka AI
+                    Hypotéka chytře
                 </span>
             </h1>
-            <p class="text-xl text-blue-100 max-w-2xl mx-auto">
-                Revoluční spojení umělé inteligence a profesionálního poradenství pro vaši hypotéku
+            <p class="text-xl text-blue-100 max-w-3xl mx-auto">
+                Unikátní spojení AI a zkušených profesionálů. Získejte nejlepší podmínky na trhu bez chození do banky.
             </p>
         </header>
-        
-        <!-- Metrics -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center my-12">
-            <div class="metric-card p-6 rounded-2xl shadow-lg">
-                <p class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">8.4 mld Kč</p>
-                <p class="text-gray-600 text-sm">Zprostředkováno</p>
-            </div>
-            <div class="metric-card p-6 rounded-2xl shadow-lg">
-                <p class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">12 847</p>
-                <p class="text-gray-600 text-sm">Spokojených klientů</p>
-            </div>
-            <div class="metric-card p-6 rounded-2xl shadow-lg">
-                <p class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">286 000 Kč</p>
-                <p class="text-gray-600 text-sm">Průměrná úspora</p>
-            </div>
-            <div class="metric-card p-6 rounded-2xl shadow-lg">
-                <p class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">4.9/5.0</p>
-                <p class="text-gray-600 text-sm">Hodnocení</p>
-            </div>
-        </div>
 
         <!-- Main content -->
         <main class="glass-card p-8 md:p-12 rounded-3xl shadow-2xl">
@@ -66,160 +42,94 @@
             <section id="calculator-mode" class="mode-content">
                 <!-- Timeline -->
                 <div id="timeline" class="mb-12">
-                    <!-- Timeline implementation -->
                     <div class="relative w-full">
-                        <div class="timeline-line absolute top-1/2 left-0 w-full transform -translate-y-1/2">
-                            <div id="timeline-progress" class="timeline-progress"></div>
-                        </div>
+                        <div class="timeline-line"><div id="timeline-progress"></div></div>
                         <div class="flex justify-between relative">
-                            <div id="step-1" class="timeline-step active w-1/5 text-center" data-step="1">
-                                <div class="step-circle mx-auto w-14 h-14 rounded-full border-2 flex items-center justify-center font-bold text-xl shadow-lg">1</div>
-                                <p class="mt-3 text-sm md:text-base font-medium">Záměr</p>
-                            </div>
-                            <div id="step-2" class="timeline-step w-1/5 text-center" data-step="2">
-                                <div class="step-circle mx-auto w-14 h-14 rounded-full border-2 flex items-center justify-center font-bold text-xl shadow-lg">2</div>
-                                <p class="mt-3 text-sm md:text-base font-medium">Nastavení</p>
-                            </div>
-                            <div id="step-3" class="timeline-step w-1/5 text-center" data-step="3">
-                                <div class="step-circle mx-auto w-14 h-14 rounded-full border-2 flex items-center justify-center font-bold text-xl shadow-lg">3</div>
-                                <p class="mt-3 text-sm md:text-base font-medium">Finance</p>
-                            </div>
-                            <div id="step-4" class="timeline-step w-1/5 text-center" data-step="4">
-                                <div class="step-circle mx-auto w-14 h-14 rounded-full border-2 flex items-center justify-center font-bold text-xl shadow-lg">4</div>
-                                <p class="mt-3 text-sm md:text-base font-medium">Analýza</p>
-                            </div>
-                            <div id="step-5" class="timeline-step w-1/5 text-center" data-step="5">
-                                <div class="step-circle mx-auto w-14 h-14 rounded-full border-2 flex items-center justify-center font-bold text-xl shadow-lg">5</div>
-                                <p class="mt-3 text-sm md:text-base font-medium">Kontakt</p>
-                            </div>
+                            <div class="timeline-step active" data-step="1"><div class="step-circle">1</div><p>Základ</p></div>
+                            <div class="timeline-step" data-step="2"><div class="step-circle">2</div><p>Příjmy</p></div>
+                            <div class="timeline-step" data-step="3"><div class="step-circle">3</div><p>Analýza</p></div>
+                            <div class="timeline-step" data-step="4"><div class="step-circle">4</div><p>Kontakt</p></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Form Sections Container -->
                 <div id="form-container">
-                    <!-- Step 1: Intent -->
+                    <!-- Step 1: Basic Info -->
                     <div id="section-1" class="form-section active">
-                        <h2 class="text-3xl font-bold mb-8 text-center text-white">Co plánujete?</h2>
-                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                            <button data-intent="koupe" class="intent-btn p-4 border-2 rounded-2xl text-center">
-                                <span class="text-4xl">🏡</span>
-                                <p class="font-semibold mt-2">Koupě</p>
-                            </button>
-                            <button data-intent="vystavba" class="intent-btn p-4 border-2 rounded-2xl text-center">
-                                <span class="text-4xl">🏗️</span>
-                                <p class="font-semibold mt-2">Výstavba</p>
-                            </button>
-                            <button data-intent="rekonstrukce" class="intent-btn p-4 border-2 rounded-2xl text-center">
-                                <span class="text-4xl">🛠️</span>
-                                <p class="font-semibold mt-2">Rekonstrukce</p>
-                            </button>
-                            <button data-intent="refinancovani" class="intent-btn p-4 border-2 rounded-2xl text-center">
-                                <span class="text-4xl">🔄</span>
-                                <p class="font-semibold mt-2">Refinancování</p>
-                            </button>
-                            <button data-intent="investice" class="intent-btn p-4 border-2 rounded-2xl text-center col-span-2 md:col-span-1">
-                                <span class="text-4xl">📈</span>
-                                <p class="font-semibold mt-2">Investice</p>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Settings -->
-                    <div id="section-2" class="form-section">
-                         <h2 class="text-3xl font-bold mb-8 text-center text-white">Základní nastavení</h2>
-                         <!-- Input fields for different intents -->
-                        <div id="purchase-inputs" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <h2 class="form-title">Základní parametry hypotéky</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="propertyValue" class="block text-lg font-medium text-white mb-2">Cena nemovitosti</label>
-                                <input type="text" id="propertyValue" class="modern-input w-full" placeholder="např. 5 000 000 Kč">
+                                <label for="propertyValue" class="form-label">Cena nemovitosti</label>
+                                <input type="text" id="propertyValue" class="modern-input" placeholder="např. 5 000 000 Kč">
                             </div>
                             <div>
-                                <label for="ownResources" class="block text-lg font-medium text-white mb-2">Vlastní zdroje</label>
-                                <input type="text" id="ownResources" class="modern-input w-full" placeholder="např. 1 000 000 Kč nebo 20%">
+                                <label for="ownResources" class="form-label">Vlastní zdroje</label>
+                                <input type="text" id="ownResources" class="modern-input" placeholder="např. 1 000 000 Kč nebo 20%">
+                            </div>
+                            <div>
+                                <label for="loanTerm" class="form-label">Doba splatnosti (roky)</label>
+                                <select id="loanTerm" class="modern-input"><option>20</option><option selected>25</option><option>30</option></select>
+                            </div>
+                            <div>
+                                <label for="fixation" class="form-label">Fixace (roky)</label>
+                                <select id="fixation" class="modern-input"><option>3</option><option selected>5</option><option>7</option><option>10</option></select>
                             </div>
                         </div>
-                        <div id="construction-inputs" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- construction fields -->
-                        </div>
-                        <div id="refinancing-inputs" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- refinancing fields -->
-                        </div>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                             <div>
-                                <label for="loanTerm" class="block text-lg font-medium text-white mb-2">Doba splatnosti (roky)</label>
-                                <select id="loanTerm" class="modern-input w-full">
-                                    <option>20</option><option selected>25</option><option>30</option>
-                                </select>
-                             </div>
-                             <div>
-                                <label for="fixation" class="block text-lg font-medium text-white mb-2">Fixace (roky)</label>
-                                <select id="fixation" class="modern-input w-full">
-                                    <option>3</option><option selected>5</option><option>7</option><option>10</option>
-                                </select>
-                             </div>
-                         </div>
                         <div id="quick-results" class="mt-8 glass-card-inner p-6 text-center rounded-xl">
-                            <p class="text-white">Orientační měsíční splátka:</p>
-                            <p id="monthly-payment-display" class="text-4xl font-bold text-white my-2">--,-- Kč</p>
+                            <p class="text-white/80">Výše úvěru</p>
+                            <p id="loan-amount-display" class="text-4xl font-bold text-white my-1">0 Kč</p>
+                            <p id="ltv-display" class="text-lg font-semibold text-blue-200">LTV 0 %</p>
                         </div>
                     </div>
 
-                    <!-- Step 3: Finances -->
-                    <div id="section-3" class="form-section">
-                        <h2 class="text-3xl font-bold mb-8 text-center text-white">Vaše finance</h2>
+                    <!-- Step 2: Income -->
+                    <div id="section-2" class="form-section">
+                        <h2 class="form-title">Vaše finanční situace</h2>
                         <div class="max-w-xl mx-auto space-y-6">
-                             <div>
-                                <label for="monthlyIncome" class="block text-lg font-medium text-white mb-2">Čistý měsíční příjem domácnosti</label>
-                                <input type="text" id="monthlyIncome" class="modern-input w-full" placeholder="např. 60 000 Kč">
+                            <div>
+                                <label for="monthlyIncome" class="form-label">Čistý měsíční příjem domácnosti</label>
+                                <input type="text" id="monthlyIncome" class="modern-input" placeholder="např. 60 000 Kč">
                             </div>
                             <div>
-                                <label for="monthlyLiabilities" class="block text-lg font-medium text-white mb-2">Měsíční splátky jiných úvěrů</label>
-                                <input type="text" id="monthlyLiabilities" class="modern-input w-full" placeholder="např. 5 000 Kč" value="0">
-                            </div>
-                            <div id="dsti-result" class="mt-6 glass-card-inner p-4 text-center rounded-xl hidden">
-                                <p class="text-white">Vaše DSTI je <span id="dsti-display" class="font-bold text-xl">--%</span>. <span id="dsti-tip"></span></p>
+                                <label for="monthlyLiabilities" class="form-label">Měsíční splátky jiných úvěrů</label>
+                                <input type="text" id="monthlyLiabilities" class="modern-input" placeholder="např. 5 000 Kč" value="0">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 4: Analysis -->
-                    <div id="section-4" class="form-section">
-                        <h2 class="text-3xl font-bold mb-8 text-center text-white">Personalizovaná analýza</h2>
+                    <!-- Step 3: Analysis -->
+                    <div id="section-3" class="form-section">
+                        <h2 class="form-title">AI pro vás našlo nejlepší nabídky</h2>
+                        <p class="text-center text-blue-200 mb-8">Toto jsou 3 nejlepší neveřejné sazby, na které pravděpodobně dosáhnete. Kliknutím vyberte nabídku.</p>
                         <div id="analysis-results" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <!-- Offer cards will be injected here -->
                         </div>
                         <div class="glass-card-inner p-6 rounded-xl">
-                            <h3 class="text-xl font-bold text-white text-center mb-4">Vývoj splácení</h3>
-                            <canvas id="loanChart"></canvas>
+                            <h3 class="text-xl font-bold text-white text-center mb-4">Průběh splácení vybrané nabídky</h3>
+                            <div class="h-64"><canvas id="loanChart"></canvas></div>
                         </div>
                     </div>
 
-                    <!-- Step 5: Contact -->
-                    <div id="section-5" class="form-section">
+                    <!-- Step 4: Contact -->
+                    <div id="section-4" class="form-section">
                         <div class="text-center max-w-2xl mx-auto">
-                            <h2 class="text-3xl font-bold text-white mb-4">Téměř hotovo!</h2>
-                            <p class="text-blue-100 mb-8">Získejte kompletní PDF analýzu a nezávaznou konzultaci zdarma.</p>
+                            <h2 class="form-title">Poslední krok k nejlepší hypotéce</h2>
+                            <p class="text-blue-200 mb-8">Naše AI provedla první analýzu. Nyní je čas na experta. Zanechte nám kontakt a náš specialista pro vás **zdarma** vyjedná finální podmínky a připraví kompletní PDF srovnání.</p>
                             <form id="lead-form" name="lead-form" class="space-y-4 glass-card-inner p-8 rounded-xl" netlify>
                                 <input type="hidden" name="form-name" value="lead-form" />
                                 <input type="hidden" name="calculation_summary" id="calculation_summary" />
-                                <div>
-                                    <input type="text" id="name" name="name" required class="modern-input w-full" placeholder="Jméno a příjmení">
-                                </div>
-                                <div>
-                                    <input type="email" id="email" name="email" required class="modern-input w-full" placeholder="E-mail">
-                                </div>
-                                <div>
-                                    <input type="tel" id="phone" name="phone" required class="modern-input w-full" placeholder="Telefon">
-                                </div>
-                                <button type="submit" id="submit-lead-btn" class="w-full bg-green-500 text-white font-bold py-4 px-6 rounded-lg text-lg hover:bg-green-600 transition duration-300">
-                                    <span class="btn-text">Odeslat a získat analýzu</span>
+                                <input type="text" name="name" required class="modern-input" placeholder="Jméno a příjmení">
+                                <input type="email" name="email" required class="modern-input" placeholder="E-mail">
+                                <input type="tel" name="phone" required class="modern-input" placeholder="Telefon">
+                                <button type="submit" id="submit-lead-btn" class="w-full submit-btn">
+                                    <span class="btn-text">Chci nejlepší nabídku</span>
                                     <span class="loading-spinner hidden"></span>
                                 </button>
                             </form>
                             <div id="form-success" class="hidden mt-6 glass-card-inner p-6 rounded-xl">
-                                <h3 class="text-2xl font-bold text-white">Děkujeme!</h3>
-                                <p class="text-blue-100">Brzy se vám ozveme.</p>
+                                <h3 class="text-2xl font-bold text-white">Skvěle! Ozveme se.</h3>
+                                <p class="text-blue-200">Náš specialista se vám brzy ozve s finální nabídkou.</p>
                             </div>
                         </div>
                     </div>
@@ -240,7 +150,7 @@
                     </div>
                     <div class="p-4 border-t border-white/20">
                         <div class="flex gap-4">
-                            <input type="text" id="chat-input" class="modern-input flex-1" placeholder="Zadejte svůj dotaz...">
+                            <input type="text" id="chat-input" class="modern-input flex-1" placeholder="Na co se chcete zeptat?">
                             <button id="chat-send" class="nav-btn">Odeslat</button>
                         </div>
                     </div>
@@ -248,8 +158,6 @@
             </section>
         </main>
     </div>
-
-    <!-- Opravený odkaz na JS soubor -->
     <script src="script.js" defer></script>
 </body>
 </html>
