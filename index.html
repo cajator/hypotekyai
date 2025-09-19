@@ -58,7 +58,7 @@
                     <!-- Step 1: Basic Info -->
                     <div id="section-1" class="form-section active">
                         <h2 class="form-title">Základní parametry hypotéky</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                             <div>
                                 <label for="propertyValue" class="form-label">Cena nemovitosti</label>
                                 <input type="text" id="propertyValue" class="modern-input" placeholder="např. 5 000 000 Kč">
@@ -68,16 +68,31 @@
                                 <input type="text" id="ownResources" class="modern-input" placeholder="např. 1 000 000 Kč nebo 20%">
                             </div>
                             <div>
-                                <label for="loanTerm" class="form-label">Doba splatnosti (roky)</label>
+                                <label for="loanTerm" class="form-label inline-flex items-center">
+                                    Doba splatnosti (roky)
+                                    <span class="tooltip ml-2">?
+                                        <span class="tooltip-text">Na jak dlouho si chcete úvěr vzít. Delší doba znamená nižší splátku, ale celkově více zaplatíte na úrocích.</span>
+                                    </span>
+                                </label>
                                 <select id="loanTerm" class="modern-input"><option>20</option><option selected>25</option><option>30</option></select>
                             </div>
                             <div>
-                                <label for="fixation" class="form-label">Fixace (roky)</label>
+                                <label for="fixation" class="form-label inline-flex items-center">
+                                    Fixace (roky)
+                                    <span class="tooltip ml-2">?
+                                        <span class="tooltip-text">Doba, po kterou vám banka garantuje neměnnou úrokovou sazbu. Po skončení fixace se sazba mění podle aktuální situace na trhu.</span>
+                                    </span>
+                                </label>
                                 <select id="fixation" class="modern-input"><option>3</option><option selected>5</option><option>7</option><option>10</option></select>
                             </div>
                         </div>
                         <div id="quick-results" class="mt-8 glass-card-inner p-6 text-center rounded-xl">
-                            <p class="text-white/80">Výše úvěru</p>
+                            <p class="text-white/80 inline-flex items-center">
+                                Výše úvěru (LTV)
+                                <span class="tooltip ml-2">?
+                                    <span class="tooltip-text">'Loan to Value' - poměr výše úvěru k zástavní hodnotě nemovitosti. Banky obvykle půjčují do 80-90% LTV.</span>
+                                </span>
+                            </p>
                             <p id="loan-amount-display" class="text-4xl font-bold text-white my-1">0 Kč</p>
                             <p id="ltv-display" class="text-lg font-semibold text-blue-200">LTV 0 %</p>
                         </div>
@@ -122,6 +137,7 @@
                                 <input type="text" name="name" required class="modern-input" placeholder="Jméno a příjmení">
                                 <input type="email" name="email" required class="modern-input" placeholder="E-mail">
                                 <input type="tel" name="phone" required class="modern-input" placeholder="Telefon">
+                                <textarea name="note" class="modern-input" placeholder="Poznámka nebo specifický dotaz (nepovinné)" rows="3"></textarea>
                                 <button type="submit" id="submit-lead-btn" class="w-full submit-btn">
                                     <span class="btn-text">Chci nejlepší nabídku</span>
                                     <span class="loading-spinner hidden"></span>
@@ -148,7 +164,10 @@
                     <div id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-4">
                         <!-- AI chat messages will appear here -->
                     </div>
-                    <div class="p-4 border-t border-white/20">
+                    <div id="ai-suggestions" class="p-4 border-t border-b border-white/20 flex flex-wrap gap-2 justify-center">
+                        <!-- Suggestion buttons will be injected here -->
+                    </div>
+                    <div class="p-4">
                         <div class="flex gap-4">
                             <input type="text" id="chat-input" class="modern-input flex-1" placeholder="Na co se chcete zeptat?">
                             <button id="chat-send" class="nav-btn">Odeslat</button>

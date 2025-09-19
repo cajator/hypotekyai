@@ -1,4 +1,4 @@
-// Hypotéka AI - Aplikace v5.1 - Stabilní verze
+// Hypotéka AI - Aplikace v5.2 - Plně funkční a vylepšená verze
 'use strict';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -6,7 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const CONFIG = {
         API_RATES_ENDPOINT: '/api/rates',
         API_CHAT_ENDPOINT: '/api/chat',
-        DEBOUNCE_DELAY: 400
+        DEBOUNCE_DELAY: 400,
+        AI_SUGGESTIONS: [
+            "Jaké jsou výhody delší fixace?",
+            "Co když jsem OSVČ?",
+            "Můžu si půjčit i na rekonstrukci?",
+            "Jak banka posuzuje mé příjmy?"
+        ]
     };
 
     // --- STAV APLIKACE ---
@@ -51,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window: document.getElementById('chat-window'),
             input: document.getElementById('chat-input'),
             sendBtn: document.getElementById('chat-send'),
+            suggestions: document.getElementById('ai-suggestions'),
         }
     };
 
@@ -59,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         updateUI();
         addChatMessage('Dobrý den! Jsem vaše AI, která vám pomůže s hypotékou. Zeptejte se na cokoliv, nebo vyplňte kalkulačku pro první odhad.', 'ai');
+        generateAISuggestions();
         await fetchRates();
     };
 
@@ -89,22 +97,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ZPRACOVÁNÍ VSTUPŮ Z FORMULÁŘE ---
     const handleInputChange = () => {
-        const { propertyValue, ownResources, loanTerm, fixation, monthlyIncome, monthlyLiabilities } = state.formData;
         const form = DOMElements.inputs;
-        
         state.formData.propertyValue = parseNumber(form.propertyValue.value);
         if (form.ownResources.value.includes('%')) {
             state.formData.ownResources = state.formData.propertyValue * (parseNumber(form.ownResources.value) / 100);
         } else {
             state.formData.ownResources = parseNumber(form.ownResources.value);
         }
-        
         state.formData.loanTerm = parseInt(form.loanTerm.value);
         state.formData.fixation = parseInt(form.fixation.value);
         state.formData.monthlyIncome = parseNumber(form.monthlyIncome.value);
         state.formData.monthlyLiabilities = parseNumber(form.monthlyLiabilities.value);
         
-        // Okamžitý přepočet LTV a výše úvěru
         state.formData.loanAmount = Math.max(0, state.formData.propertyValue - state.formData.ownResources);
         state.calculation.ltv = state.formData.propertyValue > 0 ? (state.formData.loanAmount / state.formData.propertyValue) * 100 : 0;
 
@@ -213,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams(new FormData(DOMElements.leadForm)).toString()
             });
-            DOMElements.leadForm.classList.add('hidden');
+            DOMElements.leadForm.parentElement.classList.add('hidden');
             DOMElements.formSuccess.classList.remove('hidden');
         } catch (error) {
             alert('Chyba při odesílání.');
@@ -224,12 +228,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- AI CHAT ---
-    const sendChatMessage = async () => {
-        const input = DOMElements.chat.input;
-        const message = input.value.trim();
+    const sendChatMessage = async (messageText) => {
+        const message = typeof messageText === 'string' ? messageText : DOMElements.chat.input.value.trim();
         if (!message) return;
+        
         addChatMessage(message, 'user');
-        input.value = '';
+        if (typeof messageText !== 'string') {
+            DOMElements.chat.input.value = '';
+        }
+        
+        addChatMessage('...', 'ai-typing'); // Zobrazí indikátor psaní
+
         try {
             const res = await fetch(CONFIG.API_CHAT_ENDPOINT, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -237,18 +246,44 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!res.ok) throw new Error('Chyba serveru');
             const data = await res.json();
-            addChatMessage(data.response, 'ai');
+            updateLastMessage(data.response, 'ai');
         } catch (e) {
-            addChatMessage('Omlouvám se, umělá inteligence má dočasně výpadek. Zkuste to prosím později.', 'ai');
+            updateLastMessage('Omlouvám se, umělá inteligence má dočasně výpadek. Zkuste to prosím později.', 'ai');
         }
+    };
+
+    const generateAISuggestions = () => {
+        const container = DOMElements.chat.suggestions;
+        container.innerHTML = '';
+        CONFIG.AI_SUGGESTIONS.forEach(text => {
+            const button = document.createElement('button');
+            button.className = 'bg-white/10 text-white text-sm py-2 px-3 rounded-full hover:bg-white/20 transition-colors';
+            button.textContent = text;
+            button.onclick = () => sendChatMessage(text);
+            container.appendChild(button);
+        });
     };
     
     const addChatMessage = (message, sender) => {
         const bubble = document.createElement('div');
+        if (sender === 'ai-typing') {
+            bubble.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+        } else {
+            bubble.innerHTML = message.replace(/\n/g, '<br>');
+        }
         bubble.className = `chat-bubble-${sender}`;
-        bubble.innerHTML = message.replace(/\n/g, '<br>');
         DOMElements.chat.window.appendChild(bubble);
         DOMElements.chat.window.scrollTop = DOMElements.chat.window.scrollHeight;
+    };
+
+    const updateLastMessage = (message, sender) => {
+        const lastBubble = DOMElements.chat.window.lastElementChild;
+        if (lastBubble && lastBubble.classList.contains('chat-bubble-ai-typing')) {
+            lastBubble.className = `chat-bubble-${sender}`;
+            lastBubble.innerHTML = message.replace(/\n/g, '<br>');
+        } else {
+            addChatMessage(message, sender);
+        }
     };
 
     // --- POMOCNÉ FUNKCE A AKTUALIZACE UI ---
@@ -259,18 +294,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const switchMode = (mode) => { state.mode = mode; updateUI(); };
     
     const updateUI = () => {
-        // Zobrazení správného módu (kalkulačka/AI)
         DOMElements.calculatorMode.classList.toggle('hidden', state.mode !== 'calculator');
         DOMElements.aiMode.classList.toggle('hidden', state.mode !== 'ai');
         DOMElements.modeButtons.forEach(b => {
             const isActive = b.dataset.mode === state.mode;
-            b.classList.toggle('border-white', isActive);
-            b.classList.toggle('text-white', isActive);
-            b.classList.toggle('border-transparent', !isActive);
-            b.classList.toggle('text-blue-100', !isActive);
+            b.classList.toggle('border-white', isActive); b.classList.toggle('text-white', isActive);
+            b.classList.toggle('border-transparent', !isActive); b.classList.toggle('text-blue-100', !isActive);
         });
 
-        // Aktualizace timeline a zobrazení správné sekce formuláře
         if (state.mode === 'calculator') {
             DOMElements.formSections.forEach((s, i) => s.classList.toggle('active', i + 1 === state.currentStep));
             DOMElements.timelineProgress.style.width = `${((state.currentStep - 1) / (DOMElements.timelineSteps.length - 1)) * 100}%`;
