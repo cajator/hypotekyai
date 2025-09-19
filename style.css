@@ -419,10 +419,10 @@ footer {
 /* ===== LOADING ===== */
 .loading-spinner {
     display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #2563eb;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }

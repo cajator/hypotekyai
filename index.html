@@ -263,13 +263,40 @@
 
                     <!-- Step 4: Bank Offers -->
                     <div id="section-4" class="form-section hidden">
-                        <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Nejlepší nabídky bank</h2>
+                        <h2 class="text-3xl font-bold text-center text-gray-800 mb-4">Nejlepší nabídky bank</h2>
                         <p class="text-center text-gray-600 mb-8">AI vybralo 3 nejlepší nabídky na základě vašich parametrů</p>
-                        <div id="bank-offers" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <!-- Bank offers grid -->
+                        <div id="bank-offers" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <!-- Bank offers will be dynamically inserted here -->
+                            <div class="col-span-3 text-center py-12 text-gray-500">
+                                <div class="loading-spinner mx-auto mb-4"></div>
+                                <p>Načítám nabídky bank...</p>
+                            </div>
                         </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-lg">
-                            <canvas id="loanChart" width="400" height="200"></canvas>
+                        
+                        <!-- Chart section -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Graf splácení úvěru</h3>
+                            <div style="position: relative; height: 300px;">
+                                <canvas id="loanChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Summary section -->
+                        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                                <p class="text-sm text-gray-600">Výše úvěru</p>
+                                <p class="text-xl font-bold text-blue-600" id="summary-loan">-- Kč</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                <p class="text-sm text-gray-600">Měsíční splátka</p>
+                                <p class="text-xl font-bold text-green-600" id="summary-payment">-- Kč</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                                <p class="text-sm text-gray-600">Celkový přeplatek</p>
+                                <p class="text-xl font-bold text-purple-600" id="summary-interest">-- Kč</p>
+                            </div>
                         </div>
                     </div>
 

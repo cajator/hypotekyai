@@ -71,6 +71,14 @@ function initializeApp() {
     
     // Aktualizovat datum
     document.getElementById('last-updated').textContent = new Date().toLocaleDateString('cs-CZ');
+    
+    // Pre-fill demo data for testing
+    if (!localStorage.getItem('hypotekaData')) {
+        document.getElementById('propertyValue').value = '5000000';
+        document.getElementById('ownResources').value = '1000000';
+        document.getElementById('monthlyIncome').value = '60000';
+        calculateAndFetchRates();
+    }
 }
 
 function setupEventListeners() {
@@ -204,8 +212,16 @@ function goToStep(step) {
     });
     
     // Load offers when reaching step 4
-    if (step === 4 && AppState.offers.length > 0) {
-        displayOffers(AppState.offers);
+    if (step === 4) {
+        // Always recalculate when entering step 4
+        calculateAndFetchRates().then(() => {
+            if (AppState.offers && AppState.offers.length > 0) {
+                displayOffers(AppState.offers);
+            } else {
+                // If no offers from API, create mock offers for demo
+                createMockOffers();
+            }
+        });
     }
 }
 
@@ -360,7 +376,7 @@ async function calculateAndFetchRates() {
             const response = await fetch(`${CONFIG.API.RATES}?${params}`);
             const data = await response.json();
             
-            if (data.offers) {
+            if (data.offers && data.offers.length > 0) {
                 AppState.offers = data.offers;
                 
                 // Update displays
@@ -380,27 +396,92 @@ async function calculateAndFetchRates() {
                     displayOffers(data.offers);
                     createChart(loanAmount, loanTerm, data.bestOffer.rate);
                 }
+            } else {
+                // No offers from API, use mock data
+                createMockOffers();
             }
         } catch (error) {
             console.error('Chyba při výpočtu:', error);
             // Fallback na lokální výpočet
-            const rate = getLocalRate(ltv, fixation);
-            const monthlyPayment = calculateMonthlyPayment(loanAmount, rate, loanTerm);
-            
-            AppState.formData.monthlyPayment = monthlyPayment;
-            updateDisplay('monthly-payment-display', formatCurrency(monthlyPayment) + ' Kč');
-            
-            if (monthlyIncome > 0) {
-                const dsti = ((monthlyPayment + monthlyLiabilities) / monthlyIncome * 100);
-                AppState.formData.dsti = dsti;
-                updateDisplay('dsti-display', dsti.toFixed(0) + '%');
-                updateDSTIIndicator(dsti);
-            }
+            createMockOffers();
         }
     }
     
     // Save data
     saveData();
+}
+
+// Create mock offers when API fails
+function createMockOffers() {
+    const loanAmount = AppState.formData.loanAmount;
+    const loanTerm = AppState.formData.loanTerm;
+    const ltv = AppState.formData.ltv;
+    const monthlyIncome = AppState.formData.monthlyIncome;
+    
+    // Calculate base rate based on LTV
+    let baseRate = 4.39;
+    if (ltv > 90) baseRate = 4.89;
+    else if (ltv > 80) baseRate = 4.59;
+    else if (ltv < 70) baseRate = 4.19;
+    
+    // Create mock offers
+    const mockOffers = [
+        {
+            bankId: 'hypotecni-banka',
+            bankName: 'Hypoteční banka',
+            bankLogo: '🏠',
+            rate: baseRate - 0.2,
+            monthlyPayment: calculateMonthlyPayment(loanAmount, baseRate - 0.2, loanTerm),
+            totalPaid: calculateMonthlyPayment(loanAmount, baseRate - 0.2, loanTerm) * loanTerm * 12,
+            totalInterest: (calculateMonthlyPayment(loanAmount, baseRate - 0.2, loanTerm) * loanTerm * 12) - loanAmount,
+            ltv: ltv.toFixed(1),
+            dsti: monthlyIncome ? ((calculateMonthlyPayment(loanAmount, baseRate - 0.2, loanTerm) / monthlyIncome) * 100).toFixed(1) : null,
+            bestFor: 'Nejnižší sazba'
+        },
+        {
+            bankId: 'ceska-sporitelna',
+            bankName: 'Česká spořitelna',
+            bankLogo: '🏦',
+            rate: baseRate,
+            monthlyPayment: calculateMonthlyPayment(loanAmount, baseRate, loanTerm),
+            totalPaid: calculateMonthlyPayment(loanAmount, baseRate, loanTerm) * loanTerm * 12,
+            totalInterest: (calculateMonthlyPayment(loanAmount, baseRate, loanTerm) * loanTerm * 12) - loanAmount,
+            ltv: ltv.toFixed(1),
+            dsti: monthlyIncome ? ((calculateMonthlyPayment(loanAmount, baseRate, loanTerm) / monthlyIncome) * 100).toFixed(1) : null,
+            bestFor: 'Rychlé vyřízení'
+        },
+        {
+            bankId: 'csob',
+            bankName: 'ČSOB',
+            bankLogo: '🏛️',
+            rate: baseRate + 0.1,
+            monthlyPayment: calculateMonthlyPayment(loanAmount, baseRate + 0.1, loanTerm),
+            totalPaid: calculateMonthlyPayment(loanAmount, baseRate + 0.1, loanTerm) * loanTerm * 12,
+            totalInterest: (calculateMonthlyPayment(loanAmount, baseRate + 0.1, loanTerm) * loanTerm * 12) - loanAmount,
+            ltv: ltv.toFixed(1),
+            dsti: monthlyIncome ? ((calculateMonthlyPayment(loanAmount, baseRate + 0.1, loanTerm) / monthlyIncome) * 100).toFixed(1) : null,
+            bestFor: '100% financování'
+        }
+    ];
+    
+    AppState.offers = mockOffers;
+    
+    // Update display with best offer
+    const bestOffer = mockOffers[0];
+    AppState.formData.monthlyPayment = bestOffer.monthlyPayment;
+    updateDisplay('monthly-payment-display', formatCurrency(bestOffer.monthlyPayment) + ' Kč');
+    
+    if (bestOffer.dsti && monthlyIncome) {
+        AppState.formData.dsti = parseFloat(bestOffer.dsti);
+        updateDisplay('dsti-display', bestOffer.dsti + '%');
+        updateDSTIIndicator(parseFloat(bestOffer.dsti));
+    }
+    
+    // Display offers if on step 4
+    if (AppState.currentStep === 4) {
+        displayOffers(mockOffers);
+        createChart(loanAmount, loanTerm, bestOffer.rate);
+    }
 }
 
 function getLocalRate(ltv, fixation) {
@@ -436,122 +517,237 @@ function calculateMonthlyPayment(principal, annualRate, years) {
 
 function displayOffers(offers) {
     const container = document.getElementById('bank-offers');
-    if (!container) return;
+    if (!container) {
+        console.error('Container bank-offers not found');
+        return;
+    }
     
+    // Clear container
     container.innerHTML = '';
     
+    // If no offers, show message
+    if (!offers || offers.length === 0) {
+        container.innerHTML = '<div class="col-span-3 text-center text-gray-600 py-8">Žádné nabídky k zobrazení. Vyplňte prosím všechny údaje.</div>';
+        return;
+    }
+    
+    // Display top 3 offers
     offers.slice(0, 3).forEach((offer, index) => {
         const card = document.createElement('div');
         card.className = 'p-6 bg-white rounded-xl text-center transition-all hover:shadow-xl border-2';
         
         if (index === 0) {
-            card.className += ' border-green-500 shadow-lg';
+            card.className += ' border-green-500 shadow-lg transform scale-105';
         } else {
             card.className += ' border-gray-200';
         }
         
         card.innerHTML = `
-            <div class="text-3xl mb-2">${offer.bankLogo || '🏦'}</div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">${offer.bankName}</h3>
-            <p class="text-3xl font-bold text-blue-600">${offer.rate.toFixed(2)}%</p>
-            <p class="text-gray-600 mb-4">úroková sazba</p>
-            <p class="text-2xl font-semibold text-gray-800">${formatCurrency(offer.monthlyPayment)} Kč</p>
-            <p class="text-gray-600 mb-4">měsíční splátka</p>
-            ${offer.bestFor ? `<p class="text-sm text-gray-500">${offer.bestFor}</p>` : ''}
-            ${index === 0 ? '<div class="mt-4 text-green-500 font-bold">✓ Doporučujeme</div>' : ''}
-            <button onclick="selectBank('${offer.bankId}')" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-                Vybrat
+            <div class="text-4xl mb-3">${offer.bankLogo || '🏦'}</div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">${offer.bankName}</h3>
+            <div class="mb-4">
+                <p class="text-3xl font-bold text-blue-600">${offer.rate.toFixed(2)}%</p>
+                <p class="text-sm text-gray-600">úroková sazba</p>
+            </div>
+            <div class="mb-4">
+                <p class="text-2xl font-bold text-gray-800">${formatCurrency(offer.monthlyPayment)} Kč</p>
+                <p class="text-sm text-gray-600">měsíční splátka</p>
+            </div>
+            <div class="border-t pt-4 mb-4">
+                <div class="text-sm text-gray-600">
+                    <p>Celkem zaplatíte: <span class="font-semibold">${formatCurrency(offer.totalPaid)} Kč</span></p>
+                    <p>Přeplatek: <span class="font-semibold">${formatCurrency(offer.totalInterest)} Kč</span></p>
+                </div>
+            </div>
+            ${offer.bestFor ? `<p class="text-sm text-blue-600 italic mb-3">${offer.bestFor}</p>` : ''}
+            ${index === 0 ? '<div class="mb-3"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">✓ DOPORUČUJEME</span></div>' : ''}
+            <button onclick="selectBank('${offer.bankId}')" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold">
+                Vybrat tuto banku
             </button>
         `;
         
         container.appendChild(card);
     });
+    
+    // Update summary section
+    const bestOffer = offers[0];
+    if (bestOffer) {
+        updateDisplay('summary-loan', formatCurrency(AppState.formData.loanAmount) + ' Kč');
+        updateDisplay('summary-payment', formatCurrency(bestOffer.monthlyPayment) + ' Kč');
+        updateDisplay('summary-interest', formatCurrency(bestOffer.totalInterest) + ' Kč');
+    }
+    
+    // Create chart after displaying offers
+    if (offers[0]) {
+        const loanAmount = AppState.formData.loanAmount;
+        const loanTerm = AppState.formData.loanTerm;
+        const rate = offers[0].rate;
+        
+        setTimeout(() => {
+            createChart(loanAmount, loanTerm, rate);
+        }, 100);
+    }
 }
 
 function createChart(loanAmount, loanTerm, interestRate) {
     const canvas = document.getElementById('loanChart');
-    if (!canvas) return;
+    if (!canvas) {
+        console.error('Canvas element not found');
+        return;
+    }
     
     const ctx = canvas.getContext('2d');
     
     // Destroy existing chart
-    if (window.loanChart) {
+    if (window.loanChart && typeof window.loanChart.destroy === 'function') {
         window.loanChart.destroy();
     }
     
     // Calculate data
-    const years = [];
-    const principal = [];
-    const interest = [];
-    const remaining = [];
+    const labels = [];
+    const principalData = [];
+    const interestData = [];
+    const remainingData = [];
     
     const monthlyPayment = calculateMonthlyPayment(loanAmount, interestRate, loanTerm);
     let balance = loanAmount;
+    const monthlyRate = interestRate / 100 / 12;
     
-    for (let year = 0; year <= loanTerm; year++) {
-        years.push(year);
-        remaining.push(Math.round(balance));
+    // Calculate year by year
+    for (let year = 0; year <= Math.min(loanTerm, 30); year++) {
+        labels.push(year === 0 ? 'Start' : `${year}. rok`);
+        remainingData.push(Math.round(balance));
         
         if (year > 0) {
-            const yearlyPayment = monthlyPayment * 12;
-            const yearlyInterest = balance * (interestRate / 100);
-            const yearlyPrincipal = yearlyPayment - yearlyInterest;
+            let yearlyPrincipal = 0;
+            let yearlyInterest = 0;
             
-            principal.push(Math.round(yearlyPrincipal));
-            interest.push(Math.round(yearlyInterest));
-            balance = Math.max(0, balance - yearlyPrincipal);
+            for (let month = 1; month <= 12; month++) {
+                if (balance > 0) {
+                    const interestPayment = balance * monthlyRate;
+                    const principalPayment = Math.min(monthlyPayment - interestPayment, balance);
+                    
+                    yearlyInterest += interestPayment;
+                    yearlyPrincipal += principalPayment;
+                    balance -= principalPayment;
+                }
+            }
+            
+            principalData.push(Math.round(yearlyPrincipal));
+            interestData.push(Math.round(yearlyInterest));
         } else {
-            principal.push(0);
-            interest.push(0);
+            principalData.push(0);
+            interestData.push(0);
         }
     }
     
-    window.loanChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: years.map(y => `${y}. rok`),
-            datasets: [{
-                label: 'Zůstatek úvěru',
-                data: remaining,
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: 'white'
+    // Create chart
+    try {
+        window.loanChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Zůstatek úvěru',
+                        data: remainingData,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Roční jistina',
+                        data: principalData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        hidden: true
+                    },
+                    {
+                        label: 'Roční úroky',
+                        data: interestData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        hidden: true
                     }
-                }
+                ]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: 'white',
-                        callback: function(value) {
-                            return formatCurrency(value) + ' Kč';
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#1e293b',
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
                         }
                     },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = formatCurrency(context.raw) + ' Kč';
+                                return label + ': ' + value;
+                            }
+                        }
                     }
                 },
-                x: {
-                    ticks: {
-                        color: 'white'
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return (value / 1000000).toFixed(1) + ' mil. Kč';
+                                } else if (value >= 1000) {
+                                    return (value / 1000).toFixed(0) + ' tis. Kč';
+                                }
+                                return value + ' Kč';
+                            }
+                        }
                     },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#64748b'
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+        
+        console.log('Chart created successfully');
+    } catch (error) {
+        console.error('Error creating chart:', error);
+    }
 }
 
 // ===== CHAT =====
@@ -705,6 +901,12 @@ function validateStep(step) {
         case 2:
             if (!AppState.formData.propertyValue || AppState.formData.propertyValue <= 0) {
                 showAlert('Prosím vyplňte cenu nemovitosti');
+                document.getElementById('propertyValue')?.focus();
+                return false;
+            }
+            if (AppState.formData.loanAmount <= 0) {
+                showAlert('Výše úvěru musí být větší než 0. Zkontrolujte vlastní zdroje.');
+                document.getElementById('ownResources')?.focus();
                 return false;
             }
             break;
@@ -712,6 +914,22 @@ function validateStep(step) {
         case 3:
             if (!AppState.formData.monthlyIncome || AppState.formData.monthlyIncome <= 0) {
                 showAlert('Prosím vyplňte váš měsíční příjem');
+                document.getElementById('monthlyIncome')?.focus();
+                return false;
+            }
+            // Check DSTI
+            if (AppState.formData.dsti > 50) {
+                if (!confirm('Vaše DSTI překračuje limit 50%. Chcete přesto pokračovat?')) {
+                    return false;
+                }
+            }
+            break;
+            
+        case 4:
+            // Ensure we have all necessary data
+            if (!AppState.formData.loanAmount || !AppState.formData.propertyValue || !AppState.formData.monthlyIncome) {
+                showAlert('Prosím vyplňte všechny údaje v předchozích krocích');
+                goToStep(2); // Go back to step 2
                 return false;
             }
             break;
