@@ -1,4 +1,4 @@
-// Hypotéka AI - v10.0 - Final Build
+// Hypotéka AI - v11.0 - Final Build
 'use strict';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
         API_CHAT_ENDPOINT: '/.netlify/functions/chat',
         API_RATES_ENDPOINT: '/.netlify/functions/rates',
         DEBOUNCE_DELAY: 500,
+        SLIDER_STEPS: {
+            propertyValue: 100000,
+            ownResources: 50000,
+            income: 1000,
+            landValue: 50000,
+            constructionBudget: 100000,
+            loanBalance: 50000,
+        },
         AI_SUGGESTIONS: {
             "Začínáme": ["Jak celý proces funguje?", "Co je to LTV?", "Jaké dokumenty budu potřebovat?"],
             "Moje situace": ["Co když jsem OSVČ?", "Mám záznam v registru, vadí to?", "Chceme si půjčit s partnerem?"],
@@ -24,16 +32,19 @@ document.addEventListener('DOMContentLoaded', () => {
             propertyType: 'byt',
             applicants: 1,
             age: 35,
-            education: 'vysokoškolské',
+            education: 'středoškolské s maturitou',
             employment: 'zaměstnanec',
             income: 60000,
             liabilities: 0,
             propertyValue: 5000000,
             ownResources: 1000000,
+            landValue: 1500000,
+            constructionBudget: 4000000,
+            loanBalance: 3000000,
             loanTerm: 25,
             fixation: 5,
         },
-        calculation: { loanAmount: 0, ltv: 0, offers: [], selectedOffer: null, approvability: 0 },
+        calculation: { loanAmount: 0, ltv: 0, dsti: 0, offers: [], selectedOffer: null, approvability: 0 },
         chart: null,
     };
 
@@ -43,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modeCards: document.querySelectorAll('.mode-card'),
         liveUsersCounter: document.getElementById('live-users-counter'),
         navLinks: document.querySelectorAll('header a[href^="#"]'),
+        leadForm: document.getElementById('lead-form'),
     };
 
     // --- TEMPLATES ---
@@ -68,8 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(target) target.scrollIntoView({ behavior: 'smooth' });
             });
         });
+        DOMElements.leadForm.addEventListener('submit', handleFormSubmit);
     };
     
+    const handleFormSubmit = (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="loading-spinner"></span> Odesílám...';
+
+        fetch("/", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams(new FormData(form)).toString(),
+        })
+        .then(() => {
+            form.style.display = 'none';
+            document.getElementById('form-success').style.display = 'block';
+        })
+        .catch((error) => alert(error));
+    };
+
     // --- MODE SWITCHING ---
     const switchMode = (mode) => {
         state.mode = mode;
@@ -84,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // =================================================================================
-    // GUIDED MODE (PROFESSIONAL ANALYSIS) - The core of the new calculator
+    // GUIDED MODE (PROFESSIONAL ANALYSIS)
     // =================================================================================
     let guidedUI = {};
     const initGuidedMode = () => {
@@ -99,21 +131,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h2 class="text-3xl font-bold">Profesionální analýza</h2>
                 <p class="text-gray-600">Provedeme vás krok za krokem k nejlepší nabídce.</p>
             </div>
-            <div class="timeline">
-                <div class="timeline-line"><div id="timeline-progress"></div></div>
-                <div class="timeline-step" data-step="1"><div class="step-circle">1</div><p>Záměr</p></div>
-                <div class="timeline-step" data-step="2"><div class="step-circle">2</div><p>O vás</p></div>
-                <div class="timeline-step" data-step="3"><div class="step-circle">3</div><p>Finance</p></div>
-                <div class="timeline-step" data-step="4"><div class="step-circle">4</div><p>Analýza</p></div>
-            </div>
-            <div id="form-container">${getGuidedStepHTML(step)}</div>
+            <div id="timeline-container"></div>
+            <div id="form-container"></div>
             <div class="flex justify-between mt-12">
                 <button id="prev-btn" class="nav-btn bg-gray-500 hover:bg-gray-600">Zpět</button>
                 <button id="next-btn" class="nav-btn ml-auto"></button>
             </div>
         `;
+        renderTimeline();
+        renderGuidedStep();
         setupGuidedListeners();
         updateGuidedUI();
+    };
+    
+    const renderTimeline = () => {
+        const container = DOMElements.contentContainer.querySelector('#timeline-container');
+        if(!container) return;
+        container.innerHTML = `
+         <div class="timeline">
+                <div class="timeline-line"><div id="timeline-progress"></div></div>
+                <div class="timeline-step" data-step="1"><div class="step-circle">1</div><p>Záměr</p></div>
+                <div class="timeline-step" data-step="2"><div class="step-circle">2</div><p>O vás</p></div>
+                <div class="timeline-step" data-step="3"><div class="step-circle">3</div><p>Finance</p></div>
+                <div class="timeline-step" data-step="4"><div class="step-circle">4</div><p>Analýza</p></div>
+            </div>`;
+    };
+
+    const renderGuidedStep = () => {
+        const container = DOMElements.contentContainer.querySelector('#form-container');
+        if(!container) return;
+        container.innerHTML = getGuidedStepHTML(state.currentStep);
+        container.querySelectorAll('.slider-container').forEach(initSlider);
     };
 
     const setupGuidedListeners = () => {
@@ -126,62 +174,88 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         guidedUI.nextBtn.addEventListener('click', () => navigateStep(1));
         guidedUI.prevBtn.addEventListener('click', () => navigateStep(-1));
-        guidedUI.formContainer.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('change', syncGuidedFormData); // Use change for radios/selects
-            input.addEventListener('input', debounce(syncGuidedFormData, CONFIG.DEBOUNCE_DELAY));
-        });
+        guidedUI.formContainer.addEventListener('input', syncGuidedFormData);
     };
 
     const getGuidedStepHTML = (step) => {
         const data = state.formData;
+        let purposeSpecificHTML = '';
+
+        if(step === 1) {
+            switch(data.purpose) {
+                case 'výstavba':
+                    purposeSpecificHTML = createSliderInput('landValue', 'Cena pozemku', 0, 10000000, data.landValue) + createSliderInput('constructionBudget', 'Rozpočet na výstavbu', 1000000, 20000000, data.constructionBudget);
+                    break;
+                case 'rekonstrukce':
+                    purposeSpecificHTML = createSliderInput('propertyValue', 'Hodnota nemovitosti před', 1000000, 20000000, data.propertyValue) + createSliderInput('constructionBudget', 'Rozpočet na rekonstrukci', 100000, 5000000, data.constructionBudget);
+                    break;
+                 case 'refinancování':
+                    purposeSpecificHTML = createSliderInput('propertyValue', 'Aktuální hodnota nemovitosti', 1000000, 20000000, data.propertyValue) + createSliderInput('loanBalance', 'Zůstatek úvěru k refinancování', 100000, 20000000, data.loanBalance);
+                    break;
+                default: // koupě
+                    purposeSpecificHTML = createSliderInput('propertyValue', 'Cena nemovitosti', 1000000, 20000000, data.propertyValue) + createSliderInput('ownResources', 'Vlastní zdroje', 0, 10000000, data.ownResources);
+                    break;
+            }
+        }
+        
+        if (step === 3) {
+            const tempDSTI = calculateDSTI(data.income, data.liabilities);
+            const dstiColor = tempDSTI <= 40 ? 'green' : tempDSTI <= 50 ? 'orange' : 'red';
+            purposeSpecificHTML = `<div class="md:col-span-2 mt-4"><p class="text-sm text-center">Vaše orientační DSTI je <strong style="color:${dstiColor}">${tempDSTI.toFixed(1)}%</strong> (poměr výdajů k příjmům). Limit bank je 50%.</p></div>`;
+        }
+
         switch(step) {
             case 1: return `
                 <div class="form-section active">
-                    <h3 class="text-xl font-bold mb-6">1. O jakou nemovitost se jedná?</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <h3 class="text-xl font-bold mb-6">1. Jaký je váš záměr?</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <label class="form-label">Účel hypotéky</label>
                             <div class="radio-group">${createRadioGroup('purpose', ['koupě', 'výstavba', 'rekonstrukce', 'refinancování'], data.purpose)}</div>
                         </div>
-                        <div>
-                            <label class="form-label">Typ nemovitosti</label>
-                            <div class="radio-group">${createRadioGroup('propertyType', ['byt', 'rodinný dům', 'pozemek', 'družstevní byt'], data.propertyType)}</div>
-                        </div>
-                        <div><label class="form-label">Cena / Rozpočet</label><input type="text" data-key="propertyValue" class="modern-input" value="${formatCurrency(data.propertyValue, false)}" placeholder="např. 5 000 000"></div>
-                        <div><label class="form-label">Vlastní zdroje</label><input type="text" data-key="ownResources" class="modern-input" value="${formatCurrency(data.ownResources, false)}" placeholder="např. 1 000 000"></div>
+                        <div class="space-y-6">${purposeSpecificHTML}</div>
                     </div>
                 </div>`;
             case 2: return `
                 <div class="form-section active">
                      <h3 class="text-xl font-bold mb-6">2. Něco o vás</h3>
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <label class="form-label">Počet žadatelů</label>
                             <div class="radio-group">${createRadioGroup('applicants', [1, 2], data.applicants)}</div>
                         </div>
                         <div><label class="form-label">Věk nejstaršího žadatele</label><input type="number" data-key="age" class="modern-input" value="${data.age || ''}" placeholder="např. 35"></div>
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="form-label">Nejvyšší dosažené vzdělání</label>
-                            <select data-key="education" class="modern-select">${createSelectOptions(['základní', 'středoškolské', 'vysokoškolské'], data.education)}</select>
+                            <select data-key="education" class="modern-select">${createSelectOptions(['základní', 'vyučen/odborné', 'středoškolské bez maturity', 'středoškolské s maturitou', 'vysokoškolské'], data.education)}</select>
                         </div>
                      </div>
                 </div>`;
             case 3: return `
                 <div class="form-section active">
                      <h3 class="text-xl font-bold mb-6">3. Vaše finance</h3>
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <label class="form-label">Typ vašeho hlavního příjmu</label>
                             <select data-key="employment" class="modern-select">${createSelectOptions(['zaměstnanec', 'OSVČ', 's.r.o.', 'jiné'], data.employment)}</select>
                         </div>
-                         <div><label class="form-label">Celkový čistý měsíční příjem</label><input type="text" data-key="income" class="modern-input" value="${formatCurrency(data.income, false)}" placeholder="např. 60 000"></div>
-                        <div><label class="form-label">Celkové měsíční splátky</label><input type="text" data-key="liabilities" class="modern-input" value="${formatCurrency(data.liabilities, false)}" placeholder="např. 5 000"></div>
+                        <div></div>
+                        ${createSliderInput('income', 'Celkový čistý měsíční příjem', 20000, 200000, data.income)}
+                        ${createSliderInput('liabilities', 'Celkové měsíční splátky', 0, 100000, data.liabilities)}
+                        ${purposeSpecificHTML}
                      </div>
                 </div>`;
              case 4: return `<div class="form-section active" id="analysis-container"></div>`;
         }
         return '';
     };
+    
+    const calculateDSTI = (income, liabilities) => {
+        if (!income || income === 0) return 0;
+        updateFinalLoanDetails(); // Make sure loan amount is current
+        const estimatedPayment = state.calculation.loanAmount * 0.005; 
+        return ((liabilities + estimatedPayment) / income) * 100;
+    }
 
     const syncGuidedFormData = (event) => {
         const el = event.target;
@@ -189,17 +263,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!key) return;
         
         let value = el.type === 'radio' ? el.value : el.value;
-        state.formData[key] = isNaN(parseInt(value)) ? parseNumber(value) || value : parseInt(value);
+        if (el.type !== 'range') { // prevent slider from overwriting text input with unparsed value
+            state.formData[key] = isNaN(parseInt(value)) ? (el.type === 'text' ? parseNumber(value) : value) : parseInt(value);
+        }
+        
+        if (key === 'purpose' && el.type === 'radio') {
+             renderGuidedStep();
+        }
+        if (state.currentStep === 3) {
+            const dstiContainer = DOMElements.contentContainer.querySelector('.md\\:col-span-2.mt-4');
+            if(dstiContainer) {
+                 const tempDSTI = calculateDSTI(state.formData.income, state.formData.liabilities);
+                 const dstiColor = tempDSTI <= 40 ? 'green' : tempDSTI <= 50 ? 'orange' : 'red';
+                 dstiContainer.innerHTML = `<p class="text-sm text-center">Vaše orientační DSTI je <strong style="color:${dstiColor}">${tempDSTI.toFixed(1)}%</strong> (poměr výdajů k příjmům). Limit bank je 50%.</p>`;
+            }
+        }
     };
 
     const navigateStep = async (direction) => {
-        if (direction > 0 && !validateStep(state.currentStep)) return;
+        if (direction > 0 && !validateStep(state.currentStep)) {
+            alert("Prosím, vyplňte všechna povinná pole.");
+            return;
+        }
         
         state.currentStep += direction;
         
-        if (state.currentStep === 5) {
-             renderContactForm(DOMElements.contentContainer);
-             return;
+        if (state.currentStep > 4) {
+            state.currentStep = 4; // cap at analysis
+            const kontakt = document.getElementById('kontakt');
+            if (kontakt) kontakt.scrollIntoView({behavior: 'smooth'});
+            return;
         }
 
         renderGuidedView();
@@ -210,13 +303,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateGuidedUI = () => {
+        if(!guidedUI.timelineProgress) return;
         guidedUI.timelineProgress.style.width = `${((state.currentStep - 1) / 3) * 100}%`;
         guidedUI.timelineSteps.forEach((step, i) => {
             step.classList.toggle('active', i + 1 === state.currentStep);
             step.classList.toggle('completed', i + 1 < state.currentStep);
         });
         guidedUI.prevBtn.style.visibility = state.currentStep === 1 ? 'hidden' : 'visible';
-        guidedUI.nextBtn.textContent = state.currentStep === 3 ? "Zobrazit analýzu" : "Další krok";
+        const nextButtonText = {
+            1: "Další krok",
+            2: "Další krok",
+            3: "Zobrazit analýzu",
+            4: "Kontaktovat specialistu"
+        };
+        guidedUI.nextBtn.textContent = nextButtonText[state.currentStep];
     };
 
     // =================================================================================
@@ -300,11 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateAnalysis = async (container) => {
         container.innerHTML = `<div class="text-center py-10">Analyzuji trh a počítám scoring... <div class="loading-spinner-blue"></div></div>`;
         
-        // Ensure loanTerm is set, default if not
-        if (!state.formData.loanTerm) state.formData.loanTerm = 25;
-
-        state.calculation.loanAmount = Math.max(0, state.formData.propertyValue - state.formData.ownResources);
-        state.calculation.ltv = state.formData.propertyValue > 0 ? (state.calculation.loanAmount / state.formData.propertyValue) * 100 : 0;
+        updateFinalLoanDetails();
         
         try {
             const params = new URLSearchParams(state.formData);
@@ -317,11 +413,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            state.calculation.offers = data.offers;
-            state.calculation.approvability = data.approvability;
-            state.calculation.selectedOffer = data.offers[0] || null;
+            state.calculation = { ...state.calculation, ...data };
             
             renderAnalysis(container);
+            
+            const analysisDetails = document.getElementById('analysis-details');
+            if (analysisDetails) {
+                 analysisDetails.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
 
         } catch (error) {
             console.error("Analysis Error:", error);
@@ -329,48 +428,92 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    const updateFinalLoanDetails = () => {
+         const data = state.formData;
+         switch(data.purpose) {
+            case 'výstavba':
+                data.propertyValue = data.landValue + data.constructionBudget;
+                data.ownResources = data.landValue;
+                break;
+            case 'rekonstrukce':
+                // propertyValue is already set as "before", so we add the budget to get the "after" value for LTV
+                state.calculation.finalPropertyValue = data.propertyValue + data.constructionBudget;
+                state.calculation.loanAmount = data.constructionBudget; // Loan is just for reconstruction
+                state.calculation.ltv = state.calculation.finalPropertyValue > 0 ? (state.calculation.loanAmount / state.calculation.finalPropertyValue) * 100 : 0;
+                return; // Early exit to prevent standard calculation override
+            case 'refinancování':
+                state.calculation.loanAmount = data.loanBalance;
+                state.calculation.ltv = data.propertyValue > 0 ? (data.loanBalance / data.propertyValue) * 100 : 0;
+                return;
+        }
+        state.calculation.loanAmount = Math.max(0, data.propertyValue - data.ownResources);
+        state.calculation.ltv = data.propertyValue > 0 ? (state.calculation.loanAmount / data.propertyValue) * 100 : 0;
+    }
+    
     const renderAnalysis = (container) => {
-        const offer = state.calculation.selectedOffer;
-        if(!offer) return;
-
-        const totalPaid = offer.monthlyPayment * state.formData.loanTerm * 12;
-        const overpayment = totalPaid - state.calculation.loanAmount;
+        const { offers } = state.calculation;
+        if(!offers || offers.length === 0) return;
 
         container.innerHTML = `
             <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold">Vaše osobní analýza</h2>
-                <p class="text-gray-600">Na základě zadaných údajů jsme pro vás připravili odhad.</p>
+                <p class="text-gray-600">Na základě zadaných údajů jsme pro vás připravili 3 nejlepší scénáře.</p>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg">
-                    <h3 class="font-bold text-lg mb-4">Vývoj splácení úvěru</h3>
-                    <div class="h-80"><canvas id="loanChart"></canvas></div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                ${offers.map((offer, index) => createOfferCard(offer, index)).join('')}
+            </div>
+            <div id="analysis-details" class="grid grid-cols-1 lg:grid-cols-5 gap-8"></div>
+        `;
+        
+        DOMElements.contentContainer.querySelectorAll('.offer-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const selectedId = card.dataset.offerId;
+                state.calculation.selectedOffer = state.calculation.offers.find(o => o.id === selectedId);
+                DOMElements.contentContainer.querySelectorAll('.offer-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                renderAnalysisDetails();
+            });
+        });
+
+        const firstCard = DOMElements.contentContainer.querySelector('.offer-card');
+        if(firstCard) firstCard.click();
+    };
+    
+    const renderAnalysisDetails = () => {
+        const container = DOMElements.contentContainer.querySelector('#analysis-details');
+        if(!container || !state.calculation.selectedOffer) return;
+
+        const offer = state.calculation.selectedOffer;
+        const totalPaid = offer.monthlyPayment * state.formData.loanTerm * 12;
+        const overpayment = totalPaid - state.calculation.loanAmount;
+
+        container.innerHTML = `
+            <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg">
+                <h3 class="font-bold text-lg mb-4">Vývoj splácení úvěru</h3>
+                <div class="h-80"><canvas id="loanChart"></canvas></div>
+            </div>
+            <div class="lg:col-span-2 space-y-4">
+                 <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-center">
+                    <p class="text-sm text-green-800 font-semibold">Pravděpodobnost schválení</p>
+                    <p class="text-3xl font-bold text-green-900">${state.calculation.approvability}%</p>
                 </div>
-                <div class="lg:col-span-2 space-y-4">
-                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center">
-                        <p class="text-sm text-blue-800 font-semibold">Nejlepší odhad splátky</p>
-                        <p class="text-3xl font-bold text-blue-900">${formatCurrency(offer.monthlyPayment)}</p>
-                        <p class="text-sm text-blue-700">s úrokem od ${offer.rate.toFixed(2)} %</p>
-                    </div>
-                     <div class="bg-green-50 border border-green-200 p-4 rounded-lg text-center">
-                        <p class="text-sm text-green-800 font-semibold">Pravděpodobnost schválení</p>
-                        <p class="text-3xl font-bold text-green-900">${state.calculation.approvability}%</p>
-                    </div>
-                    <div class="text-sm space-y-2 text-gray-600 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between"><p>Výše úvěru (LTV)</p><p class="font-semibold">${formatCurrency(state.calculation.loanAmount)} (${state.calculation.ltv.toFixed(1)}%)</p></div>
-                        <div class="flex justify-between"><p>Celkem zaplatíte</p><p class="font-semibold">${formatCurrency(totalPaid)}</p></div>
-                        <div class="flex justify-between border-t pt-2 mt-2"><p>Přeplatek na úrocích</p><p class="font-semibold">${formatCurrency(overpayment)}</p></div>
-                    </div>
+                <div class="text-sm space-y-2 text-gray-600 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between"><p>Výše úvěru (LTV)</p><p class="font-semibold">${formatCurrency(state.calculation.loanAmount, true)} (${state.calculation.ltv.toFixed(1)}%)</p></div>
+                    <div class="flex justify-between"><p>Vaše DSTI</p><p class="font-semibold">${state.calculation.dsti.toFixed(1)}%</p></div>
+                    <div class="flex justify-between"><p>Celkem zaplatíte</p><p class="font-semibold">${formatCurrency(totalPaid, true)}</p></div>
+                    <div class="flex justify-between border-t pt-2 mt-2"><p>Přeplatek na úrocích</p><p class="font-semibold text-red-600">${formatCurrency(overpayment, true)}</p></div>
                 </div>
             </div>`;
-        
         updateLoanChart();
-        
-        if (state.mode !== 'guided') {
-            const contactContainer = document.createElement('div');
-            container.appendChild(contactContainer);
-            renderContactForm(contactContainer);
-        }
+    };
+
+    const createOfferCard = (offer, index) => {
+        return `
+        <div class="offer-card p-6 rounded-lg text-center" data-offer-id="${offer.id}">
+            <h4 class="font-bold text-lg">${offer.bestFor}</h4>
+            <p class="text-3xl font-bold text-blue-600">${offer.rate.toFixed(2)} %</p>
+            <p class="text-gray-700 font-semibold">${formatCurrency(offer.monthlyPayment, true)} / měsíc</p>
+        </div>`;
     };
 
     const updateLoanChart = () => {
@@ -390,10 +533,12 @@ document.addEventListener('DOMContentLoaded', () => {
             labels.push(`Rok ${year}`);
             dataPrincipal.push(loanAmount - balance);
             dataInterest.push(balance);
-            for (let month = 0; month < 12; month++) {
-                let interestPayment = balance * (offer.rate / 100 / 12);
-                let principalPayment = offer.monthlyPayment - interestPayment;
-                balance -= principalPayment;
+            if (year < term && balance > 0) {
+                 for (let month = 0; month < 12; month++) {
+                    let interestPayment = balance * (offer.rate / 100 / 12);
+                    let principalPayment = offer.monthlyPayment - interestPayment;
+                    balance = Math.max(0, balance - principalPayment);
+                }
             }
         }
 
@@ -426,22 +571,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     };
-
-    const renderContactForm = (container) => {
-        container.innerHTML = `
-            <div class="mt-12 text-center border-t pt-8">
-                <h3 class="text-2xl font-bold">Získejte finální nabídku od specialisty</h3>
-                <p class="text-gray-600 mb-6">Nechte si zdarma a nezávazně připravit nabídku na míru.</p>
-                <a href="mailto:info@hypotekai.cz" class="nav-btn">Chci nabídku od specialisty</a>
-            </div>
-        `;
-    };
     
     const validateStep = (step) => {
         const data = state.formData;
         switch(step) {
-            case 1: return data.propertyValue > 0 && data.ownResources >= 0;
-            case 2: return data.applicants > 0 && data.age > 17;
+            case 1: 
+                if(data.purpose === 'koupě') return data.propertyValue > 0 && data.ownResources >= 0;
+                if(data.purpose === 'výstavba') return data.constructionBudget > 0;
+                if(data.purpose === 'rekonstrukce') return data.propertyValue > 0 && data.constructionBudget > 0;
+                if(data.purpose === 'refinancování') return data.propertyValue > 0 && data.loanBalance > 0;
+                return false;
+            case 2: return data.applicants > 0 && data.age > 17 && data.age < 70;
             case 3: return data.income > 0;
         }
         return true;
@@ -466,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastBubble = aiUI.window.querySelector('.chat-bubble-ai-typing');
         if (lastBubble) {
             lastBubble.className = `chat-bubble-${sender}`;
-            lastBubble.innerHTML = message;
+            lastBubble.innerHTML = message.replace(/\n/g, '<br>');
         }
     };
     
@@ -489,6 +629,45 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UTILITIES ---
     const createRadioGroup = (name, options, selectedValue) => options.map(opt => `<label class="radio-label"><input type="radio" name="${name}" value="${opt}" ${opt == selectedValue ? 'checked' : ''}><span>${String(opt).charAt(0).toUpperCase() + String(opt).slice(1)}</span></label>`).join('');
     const createSelectOptions = (options, selectedValue) => options.map(opt => `<option value="${opt}" ${opt == selectedValue ? 'selected' : ''}>${String(opt).charAt(0).toUpperCase() + String(opt).slice(1)}</option>`).join('');
+    const createSliderInput = (key, label, min, max, value) => `
+        <div class="md:col-span-1 slider-container">
+            <label class="form-label flex justify-between"><span>${label}</span><strong id="${key}-val">${formatCurrency(value, true)}</strong></label>
+            <input type="range" data-key="${key}-slider" min="${min}" max="${max}" value="${value}" step="${CONFIG.SLIDER_STEPS[key] || 10000}" class="range-slider">
+            <input type="text" data-key="${key}" class="modern-input mt-2" value="${formatCurrency(value, false)}">
+        </div>
+    `;
+    const initSlider = (container) => {
+        const range = container.querySelector('input[type="range"]');
+        const text = container.querySelector('input[type="text"]');
+        const label = container.querySelector('strong');
+        if(!range || !text || !label) return;
+        
+        const syncValues = (sourceElement) => {
+            const val = parseNumber(sourceElement.value);
+            if (sourceElement.type === 'range') {
+                text.value = formatCurrency(val, false);
+            } else { // text input
+                range.value = Math.min(Math.max(val, range.min), range.max);
+            }
+            label.textContent = formatCurrency(val, true);
+            // This is the key part to update the main state object
+            const key = text.dataset.key;
+            state.formData[key] = val;
+
+            // Trigger re-render of DSTI if in step 3
+             if (state.currentStep === 3) {
+                const dstiContainer = DOMElements.contentContainer.querySelector('.md\\:col-span-2.mt-4');
+                if(dstiContainer) {
+                    const tempDSTI = calculateDSTI(state.formData.income, state.formData.liabilities);
+                    const dstiColor = tempDSTI <= 40 ? 'green' : tempDSTI <= 50 ? 'orange' : 'red';
+                    dstiContainer.innerHTML = `<p class="text-sm text-center">Vaše orientační DSTI je <strong style="color:${dstiColor}">${tempDSTI.toFixed(1)}%</strong> (poměr výdajů k příjmům). Limit bank je 50%.</p>`;
+                }
+            }
+        };
+
+        range.addEventListener('input', () => syncValues(range));
+        text.addEventListener('input', debounce(() => syncValues(text), CONFIG.DEBOUNCE_DELAY));
+    };
     
     const startLiveCounter = () => {
         let count = 147;
@@ -501,16 +680,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const parseNumber = (s) => {
         if (typeof s !== 'string' && typeof s !== 'number') return 0;
-        const cleaned = String(s).toLowerCase().replace(/,/g, '.').replace(/\s/g, '').replace('kč','');
+        const cleaned = String(s).toLowerCase().replace(/,/g, '.').replace(/\s|kč/g, '');
         if (cleaned.endsWith('m')) return parseFloat(cleaned) * 1000000;
         if (cleaned.endsWith('k')) return parseFloat(cleaned) * 1000;
         return parseFloat(cleaned) || 0;
     };
     
     const formatCurrency = (n, useSymbol = true) => {
-        if (isNaN(n) || n === 0) return '';
-        const options = { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 };
-        if (!useSymbol) {
+        if (isNaN(n) || n === null) return '';
+        const options = { currency: 'CZK', maximumFractionDigits: 0 };
+        if (useSymbol) {
+            options.style = 'currency';
+        } else {
             options.style = 'decimal';
         }
         return new Intl.NumberFormat('cs-CZ', options).format(n);

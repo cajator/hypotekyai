@@ -1,4 +1,4 @@
-// netlify/functions/chat.js - v10.0 - Final Build
+// netlify/functions/chat.js - v11.0 - Final Build
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const handler = async (event) => {
@@ -31,7 +31,7 @@ const handler = async (event) => {
             return { 
                 statusCode: 500, 
                 headers, 
-                body: JSON.stringify({ error: 'Konfigurace AI na serveru chybí. API klíč nebyl nalezen.' }) 
+                body: JSON.stringify({ error: 'Konfigurace AI na serveru chybí. API klíč nebyl nalezen. Kontaktujte prosím správce webu.' }) 
             };
         }
 
@@ -61,9 +61,9 @@ const handler = async (event) => {
 };
 
 function createSystemPrompt(context) {
-    const hasContext = context && context.calculation && context.calculation.loanAmount > 0;
+    const hasContext = context && context.calculation && (context.calculation.loanAmount > 0 || (context.formData && context.formData.propertyValue > 0));
     
-    return `Jsi přátelský a profesionální hypoteční poradce jménem Hypotéka AI. Tvůj cíl je pomoci uživateli s hypotékou. Buď stručný, nápomocný a ptej se na další kroky. Vždy jednej, jako bys měl přístup k interním metodikám bank, ale nikdy nezmiňuj jména konkrétních bank.
+    return `Jsi přátelský a profesionální hypoteční poradce jménem Hypotéka AI. Tvůj cíl je pomoci uživateli s hypotékou. Buď stručný, nápomocný a ptej se na další kroky. Vždy jednej, jako bys měl přístup k interním metodikám bank, ale nikdy nezmiňuj jména konkrétních bank. Používej Markdown pro formátování (nadpisy, odrážky).
 
     TVOJE ROLE:
     1.  **Analyzuj a raď:** Využij data z kalkulačky k poskytnutí relevantních odpovědí. Pokud se uživatel ptá obecně, ale v kontextu má relevantní data, použij je! Příklad: Uživatel se ptá "Co je LTV?" a v kontextu má LTV 85%. Tvoje odpověď by měla být: "LTV je poměr výše úvěru k hodnotě nemovitosti. Vaše LTV vychází na 85 %, což je pro banky stále akceptovatelné, i když sazby pro LTV pod 80 % bývají výhodnější."

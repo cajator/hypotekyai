@@ -112,15 +112,49 @@
                 <img src="https://www.penize.cz/images/f/5/22551-moneta-ss-logo.svg" alt="Moneta Stavební Spořitelna" class="partner-logo">
             </div>
         </section>
+
+         <!-- Contact Form -->
+        <section id="kontakt" class="my-24 max-w-3xl mx-auto">
+            <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Zanechte nám na sebe kontakt</h2>
+                    <p class="text-gray-600 max-w-xl mx-auto mb-8">Náš specialista se vám ozve do 24 hodin s nabídkou připravenou na míru.</p>
+                </div>
+                <form id="lead-form" name="lead-form" method="POST" data-netlify="true" class="space-y-6">
+                    <input type="hidden" name="form-name" value="lead-form" />
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="form-label">Jméno a příjmení</label>
+                            <input type="text" id="name" name="name" required class="modern-input">
+                        </div>
+                        <div>
+                            <label for="email" class="form-label">E-mail</label>
+                            <input type="email" id="email" name="email" required class="modern-input">
+                        </div>
+                    </div>
+                     <div>
+                        <label for="phone" class="form-label">Telefon</label>
+                        <input type="tel" id="phone" name="phone" required class="modern-input">
+                    </div>
+                    <div>
+                        <label for="note" class="form-label">Poznámka (nepovinné)</label>
+                        <textarea id="note" name="note" rows="4" class="modern-input" placeholder="Máte specifickou situaci nebo dotaz? Napište nám ho sem..."></textarea>
+                    </div>
+                    <div class="text-center pt-4">
+                        <button type="submit" class="nav-btn w-full md:w-auto">Odeslat poptávku</button>
+                    </div>
+                </form>
+                 <div id="form-success" class="hidden mt-6 text-center bg-green-100 p-4 rounded-lg">
+                    <p class="font-semibold text-green-800">Děkujeme! Vaše poptávka byla úspěšně odeslána.</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Footer -->
-    <footer id="kontakt" class="bg-gray-800 text-white">
+    <footer class="bg-gray-800 text-white">
         <div class="container mx-auto px-6 py-12 text-center">
-            <h3 class="text-3xl font-bold mb-4">Máte dotazy nebo chcete individuální nabídku?</h3>
-            <p class="text-gray-300 mb-8">Náš tým hypotečních specialistů je tu pro vás.</p>
-            <a href="mailto:info@hypotekai.cz" class="bg-blue-600 text-white font-bold px-8 py-4 rounded-lg hover:bg-blue-700 transition-transform hover:scale-105 inline-block">Domluvit si konzultaci zdarma</a>
-            <p class="text-sm text-gray-500 mt-12">&copy; 2025 Hypotéka AI. Všechna práva vyhrazena. Výpočty jsou orientační.</p>
+            <p class="text-sm text-gray-400">&copy; 2025 Hypotéka AI. Všechna práva vyhrazena. Výpočty jsou orientační a nenahrazují finální nabídku od poskytovatele.</p>
         </div>
     </footer>
 
